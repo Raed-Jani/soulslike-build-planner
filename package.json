@@ -1,0 +1,28 @@
+{
+  "name": "soulslike-build-planner",
+  "version": "1.0.0",
+  "description": "Attack rating calculator for Elden Ring.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Raed-Jani/soulslike-build-planner.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Raed-Jani/soulslike-build-planner/issues"
+  },
+  "homepage": "https://github.com/Raed-Jani/soulslike-build-planner#readme",
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  }
+}
