@@ -62,4 +62,26 @@ describe("calculateAR", () => {
     calculateAR(testSword, testCharacter, 1, true);
     expect(testCharacter).toEqual(before);
   });
+  it("paired weapons do not get the two-handing bonus", () => {
+    const paired = { ...testSword, paired: true };
+    const result = calculateAR(paired, testCharacter, 1, true);
+    expect(result.physical).toBeCloseTo(132.825, 2); // same as one-handed
+  });
+
+  it("bows are always treated as two-handed", () => {
+    const bow = { ...testSword, weaponType: 51 };
+    const result = calculateAR(bow, testCharacter, 1, false);
+    expect(result.physical).toBeCloseTo(139.975, 2); // same as two-handed
+  });
+
+  it("partial scaling uses value * scaling at level / scaling at +0", () => {
+    // str partial 0.25 -> 0.25 * 0.52 / 0.5 = 0.26
+    // multiplier = 1 + 0.25*0.26 + 0.25*0.31 = 1.1425 -> 110 * 1.1425 = 125.675
+    const partial = {
+      ...testSword,
+      attackElementCorrect: { physical: { str: 0.25, dex: true as const } },
+    };
+    const result = calculateAR(partial, testCharacter, 1);
+    expect(result.physical).toBeCloseTo(125.675, 2);
+  });
 });

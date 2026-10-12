@@ -3,11 +3,24 @@ import { allAttributes, type Attributes } from "./attributes";
 
 const INEFFECTIVE_PENALTY = 0.4;
 
+// weaponType numbers read from the game data: light bows 50, bows 51, greatbows 53,
+// ballistae 56. These can only be used two-handed.
+const ALWAYS_TWO_HANDED = [50, 51, 53, 56];
+
 export type AttackResult = Partial<Record<DamageType, number>>;
 
 // two-handing gives +50% Strength, rounded down
-export function adjustForTwoHanding(attributes: Attributes, twoHanding: boolean): Attributes {
-  if (!twoHanding) return attributes;
+export function adjustForTwoHanding(
+  weapon: Weapon,
+  attributes: Attributes,
+  twoHanding: boolean
+): Attributes {
+  let bonus = twoHanding;
+  if (weapon.paired) bonus = false; // paired weapons never get the bonus
+  if (weapon.weaponType !== undefined && ALWAYS_TWO_HANDED.includes(weapon.weaponType)) {
+    bonus = true;
+  }
+  if (!bonus) return attributes;
   return { ...attributes, str: Math.floor(attributes.str * 1.5) };
 }
 
@@ -17,7 +30,7 @@ export function calculateAR(
   upgradeLevel: number,
   twoHanding = false
 ): AttackResult {
-  const stats = adjustForTwoHanding(attributes, twoHanding);
+  const stats = adjustForTwoHanding(weapon, attributes, twoHanding);
 
   //stats below minimun requirements
   const unmet = allAttributes.filter(
@@ -30,18 +43,26 @@ export function calculateAR(
     const base = weapon.attack[upgradeLevel][type] ?? 0;
     if (base === 0) continue; // weapon has no damage of this type
 
-    const scalingStats = weapon.attackElementCorrect[type] ?? [];
+    const correct = weapon.attackElementCorrect[type] ?? {};
+    const scalingStats = allAttributes.filter((stat) => correct[stat]);
 
     let multiplier = 1;
     if (scalingStats.some((stat) => unmet.includes(stat))) {
         // a stat this damage type scales with is too low: penalty instead of bonus
       multiplier = 1 - INEFFECTIVE_PENALTY;
     } else {
-    for (const stat of scalingStats) {
-      const scaling = weapon.attributeScaling[upgradeLevel][stat] ?? 0;
-      const curveValue = weapon.calcCorrectGraphs[type][stats[stat]];
-      multiplier += curveValue * scaling;
-    }
+      for (const stat of scalingStats) {
+        const levelScaling = weapon.attributeScaling[upgradeLevel][stat] ?? 0;
+        const value = correct[stat]!;
+
+        let scaling = levelScaling;
+        if (value !== true) {
+          // partial scaling: scale the weapon's growth by this fraction
+          const baseScaling = weapon.attributeScaling[0][stat] ?? 0;
+          scaling = baseScaling === 0 ? 0 : (value * levelScaling) / baseScaling;
+        }
+        multiplier += weapon.calcCorrectGraphs[type][stats[stat]] * scaling;
+      }
     }
 
     result[type] = base * multiplier;

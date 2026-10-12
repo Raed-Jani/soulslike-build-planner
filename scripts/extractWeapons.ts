@@ -19,9 +19,7 @@ for (const name of wanted) {
     console.log(`NOT FOUND: "${name}"`);
     continue;
   }
-  const notes: string[] = [];
-  out.push(build(w, notes));
-  notes.forEach((n) => console.log("note:", n));
+  out.push(build(w));
   console.log(`ok: ${w.name}`);
 }
 
