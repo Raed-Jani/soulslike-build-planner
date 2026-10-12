@@ -20,3 +20,10 @@ or Bandai Namco.
 
 ## Planned
 Web UI (React), build comparison, more weapons, armor and talismans
+
+## Data and credits
+Weapon data (regulation-vanilla-v1.17) and the scaling-curve evaluation come from
+github.com/ThomasJClark/elden-ring-weapon-calculator (MIT License, Copyright (c) 2022
+Tom Clark; full text in THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt).
+The underlying game data belongs to FromSoftware / Bandai Namco. Fan-made, non-commercial,
+not affiliated with either company.
