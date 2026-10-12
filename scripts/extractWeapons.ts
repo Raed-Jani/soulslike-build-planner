@@ -8,7 +8,7 @@ if (wanted.length === 0) {
   process.exit(1);
 }
 
-const file = resolve("..", "reference-calculator", "public", "regulation-vanilla-v1.17.js");
+const file = resolve("public", "data", "regulation-vanilla-v1.17.json");
 const data = JSON.parse(readFileSync(file, "utf8"));
 const build = makeBuilder(data);
 const out: any[] = [];

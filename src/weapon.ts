@@ -3,6 +3,9 @@ import {fakeCurve} from "./curves";
 import type { Attribute } from "./attributes";
 export const allDamageTypes = ["physical", "magic", "fire", "lightning", "holy"] as const;
 export type DamageType = (typeof allDamageTypes)[number];
+export type AttackElementCorrect = Partial<
+  Record<DamageType, Partial<Record<Attribute, number | true>>>
+>;
 export interface Weapon {
     name: string;
       // minimum stats to use the weapon properly
@@ -11,9 +14,10 @@ export interface Weapon {
     attack: Partial<Record<DamageType, number>>[];
       // same idea: scaling coefficient per stat, per upgrade level
     attributeScaling: Partial<Record<Attribute, number>>[];
-      // which stats affect which damage type
-    attackElementCorrect: Partial<Record<DamageType, Attribute[]>>;
     calcCorrectGraphs: Record<DamageType, Curve>;
+    attackElementCorrect: AttackElementCorrect;
+    weaponType?: number;
+    paired?: boolean;
 } 
 
 //test
@@ -29,7 +33,7 @@ export const testSword: Weapon = {
     { str: 0.52, dex: 0.31 },
   ],
   attackElementCorrect: {
-    physical: ["str", "dex"],
+    physical: { str: true, dex: true  },
   },
   calcCorrectGraphs: {
   physical: fakeCurve,

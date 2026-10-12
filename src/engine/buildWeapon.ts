@@ -30,7 +30,7 @@ export function makeBuilder(data: any) {
     return curveCache.get(id)!;
   };
 
-  return function buildWeapon(w: any, notes: string[] = []) {
+  return function buildWeapon(w: any) {
     const reinforce = data.reinforceTypes[w.reinforceTypeId];
     const correct = data.attackElementCorrects[w.attackElementCorrectId];
 
@@ -51,15 +51,14 @@ export function makeBuilder(data: any) {
       return level;
     });
 
-    const attackElementCorrect: Record<string, string[]> = {};
-    DAMAGE_TYPES.forEach((type, id) => {
-      const list: string[] = [];
-      for (const [stat, value] of Object.entries(correct[id] ?? {})) {
-        if (value === true) list.push(stat);
-        else notes.push(`partial scaling: ${w.name} ${type}/${stat}`);
-      }
-      if (list.length > 0) attackElementCorrect[type] = list;
-    });
+    const attackElementCorrect: Record<string, Record<string, number | true>> = {};
+  DAMAGE_TYPES.forEach((type, id) => {
+  const map: Record<string, number | true> = {};
+  for (const [stat, value] of Object.entries(correct[id] ?? {})) {
+    if (value) map[stat] = value as number | true;
+  }
+  if (Object.keys(map).length > 0) attackElementCorrect[type] = map;
+});
 
     const calcCorrectGraphs: Record<string, number[]> = {};
     DAMAGE_TYPES.forEach((type, id) => {
@@ -68,6 +67,8 @@ export function makeBuilder(data: any) {
 
     return {
       name: w.name,
+      weaponType: w.weaponType,
+      paired: w.paired ?? false,
       requirements: w.requirements,
       attack,
       attributeScaling,
