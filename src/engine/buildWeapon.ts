@@ -1,3 +1,6 @@
+// buildCurve is a TypeScript port of evaluateCalcCorrectGraph from
+// github.com/ThomasJClark/elden-ring-weapon-calculator
+// (MIT License, Copyright (c) 2022 Tom Clark). See THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt
 export const DAMAGE_TYPES = ["physical", "magic", "fire", "lightning", "holy"] as const;
 const DEFAULT_GRAPH_ID = 0;
 
