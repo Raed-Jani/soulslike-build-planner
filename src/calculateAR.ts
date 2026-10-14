@@ -1,11 +1,10 @@
 import { allDamageTypes, type DamageType, type Weapon } from "./weapon";
 import { allAttributes, type Attributes } from "./attributes";
-
 const INEFFECTIVE_PENALTY = 0.4;
 
 // weaponType numbers read from the game data: light bows 50, bows 51, greatbows 53,
 // ballistae 56. These can only be used two-handed.
-const ALWAYS_TWO_HANDED = [50, 51, 53, 56];
+export const ALWAYS_TWO_HANDED = [50, 51, 53, 56];
 
 export type AttackResult = Partial<Record<DamageType, number>>;
 
