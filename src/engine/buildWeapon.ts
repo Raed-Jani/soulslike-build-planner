@@ -1,13 +1,18 @@
 // buildCurve is a TypeScript port of evaluateCalcCorrectGraph from
 // github.com/ThomasJClark/elden-ring-weapon-calculator
-// (MIT License, Copyright (c) 2022 Tom Clark). See THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt
-export const DAMAGE_TYPES = ["physical", "magic", "fire", "lightning", "holy"] as const;
+// (MIT License, Copyright (c) 2022 Tom Clark).
+// See THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt
+import type { Attribute } from "../attributes";
+import type { Curve } from "../curves";
+import type { AttackElementCorrect, DamageType, Weapon } from "../weapon";
+
+export const DAMAGE_TYPES: readonly DamageType[] = ["physical", "magic", "fire", "lightning", "holy"];
 const DEFAULT_GRAPH_ID = 0;
 
 // A curve is stored as a few stages. Turn it into an array: curve[stat] for stat 0..148
 // (148 because two-handing can push Strength to 99 * 1.5).
-function buildCurve(stages: { maxVal: number; maxGrowVal: number; adjPt: number }[]): number[] {
-  const curve: number[] = new Array(149).fill(0);
+function buildCurve(stages: { maxVal: number; maxGrowVal: number; adjPt: number }[]): Curve {
+  const curve: Curve = new Array(149).fill(0);
   for (let i = 1; i < stages.length; i++) {
     const prev = stages[i - 1];
     const stage = stages[i];
@@ -27,43 +32,44 @@ function buildCurve(stages: { maxVal: number; maxGrowVal: number; adjPt: number 
 // Returns a function that turns one raw weapon record into a finished weapon.
 // Curves are cached, because most weapons share the same few curves.
 export function makeBuilder(data: any) {
-  const curveCache = new Map<number, number[]>();
-  const getCurve = (id: number) => {
+  const curveCache = new Map<number, Curve>();
+  const getCurve = (id: number): Curve => {
     if (!curveCache.has(id)) curveCache.set(id, buildCurve(data.calcCorrectGraphs[id]));
     return curveCache.get(id)!;
   };
 
-  return function buildWeapon(w: any) {
-    const reinforce = data.reinforceTypes[w.reinforceTypeId];
+  return function buildWeapon(w: any): Weapon {
+    const reinforce: any[] = data.reinforceTypes[w.reinforceTypeId];
     const correct = data.attackElementCorrects[w.attackElementCorrectId];
 
-    const attack = reinforce.map((row: any) => {
-      const level: Record<string, number> = {};
-      for (const [id, base] of w.attack) {
+    const attack: Weapon["attack"] = reinforce.map((row) => {
+      const level: Partial<Record<DamageType, number>> = {};
+      for (const [id, base] of w.attack as [number, number][]) {
         if (id > 4) continue; // ignore status buildup
         level[DAMAGE_TYPES[id]] = base * (row.attack[id] ?? 0);
       }
       return level;
     });
 
-    const attributeScaling = reinforce.map((row: any) => {
-      const level: Record<string, number> = {};
-      for (const [stat, base] of w.attributeScaling) {
+    const attributeScaling: Weapon["attributeScaling"] = reinforce.map((row) => {
+      const level: Partial<Record<Attribute, number>> = {};
+      for (const [stat, base] of w.attributeScaling as [Attribute, number][]) {
         level[stat] = base * row.attributeScaling[stat];
       }
       return level;
     });
 
-    const attackElementCorrect: Record<string, Record<string, number | true>> = {};
-  DAMAGE_TYPES.forEach((type, id) => {
-  const map: Record<string, number | true> = {};
-  for (const [stat, value] of Object.entries(correct[id] ?? {})) {
-    if (value) map[stat] = value as number | true;
-  }
-  if (Object.keys(map).length > 0) attackElementCorrect[type] = map;
-});
+    const attackElementCorrect: AttackElementCorrect = {};
+    DAMAGE_TYPES.forEach((type, id) => {
+      const map: Partial<Record<Attribute, number | true>> = {};
+      const entries = Object.entries(correct[id] ?? {}) as [Attribute, number | true][];
+      for (const [stat, value] of entries) {
+        if (value) map[stat] = value;
+      }
+      if (Object.keys(map).length > 0) attackElementCorrect[type] = map;
+    });
 
-    const calcCorrectGraphs: Record<string, number[]> = {};
+    const calcCorrectGraphs = {} as Weapon["calcCorrectGraphs"];
     DAMAGE_TYPES.forEach((type, id) => {
       calcCorrectGraphs[type] = getCurve(w.calcCorrectGraphIds?.[id] ?? DEFAULT_GRAPH_ID);
     });

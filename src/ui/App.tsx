@@ -9,7 +9,14 @@ const STAT_FIELDS = ["str", "dex", "int", "fai", "arc"] as const;
 
 // staves (57), seals (61) and torches (87): their value is spell scaling, which v1 doesn't model
 const HIDDEN_TYPES = [57, 61, 87];
+type StatField = (typeof STAT_FIELDS)[number];
 
+// text -> a valid stat (1 to 99); empty or invalid text counts as 1
+function parseStat(text: string): number {
+  const n = Math.floor(Number(text));
+  if (!Number.isFinite(n) || n < 1) return 1;
+  return Math.min(99, n);
+}
 export default function App() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -17,9 +24,17 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null); // index into data.weapons
   const [level, setLevel] = useState(0);
   const [twoHanding, setTwoHanding] = useState(false);
-  const [stats, setStats] = useState<Attributes>({
-    vig: 20, mnd: 10, end: 20, str: 18, dex: 18, int: 10, fai: 10, arc: 10,
-  });
+  const [statText, setStatText] = useState<Record<StatField, string>>({
+  str: "18", dex: "18", int: "10", fai: "10", arc: "10",
+});
+const stats: Attributes = {
+  vig: 20, mnd: 10, end: 20,
+  str: parseStat(statText.str),
+  dex: parseStat(statText.dex),
+  int: parseStat(statText.int),
+  fai: parseStat(statText.fai),
+  arc: parseStat(statText.arc),
+};
 
   // load the data once, when the page opens
   useEffect(() => {
@@ -44,15 +59,10 @@ export default function App() {
   }, [data, query]);
 
   // the selected weapon, built on demand
-  const weapon = useMemo(() => {
-    if (!data || !build || selected === null) return null;
-    return build(data.weapons[selected]) as unknown as Weapon;
+  const weapon = useMemo<Weapon | null>(() => {
+  if (!data || !build || selected === null) return null;
+  return build(data.weapons[selected]);
   }, [data, build, selected]);
-
-  function setStat(stat: (typeof STAT_FIELDS)[number], value: string) {
-    const n = Math.min(99, Math.max(1, Number(value) || 1));
-    setStats({ ...stats, [stat]: n });
-  }
 
   if (error) return <p>Something went wrong: {error}</p>;
   if (!data) return <p>Loading weapon data...</p>;
@@ -106,11 +116,13 @@ export default function App() {
             <label key={stat} style={{ marginRight: 12 }}>
               {stat.toUpperCase()}{" "}
               <input
-                type="number"
-                min={1}
-                max={99}
-                value={stats[stat]}
-                onChange={(e) => setStat(stat, e.target.value)}
+                type="text"
+                inputMode="numeric"
+                value={statText[stat]}
+                onChange={(e) =>
+                  setStatText({ ...statText, [stat]: e.target.value.replace(/\D/g, "").slice(0, 2) })
+                }
+                onBlur={() => setStatText({ ...statText, [stat]: String(parseStat(statText[stat])) })}
                 style={{ width: 52 }}
               />
             </label>
