@@ -5,6 +5,8 @@ import { calculateAR, totalAR } from "./calculateAR";
 import { weapons } from "./data/weapons";
 import type { Attributes } from "./attributes";
 import {displayAR} from "./calculateAR";
+import {calculateARDetail} from "./calculateAR";
+import {scalingGrade} from "./calculateAR";
 
 describe("calculateAR", () => {
   it("computes physical AR for testSword at +1", () => {
@@ -103,5 +105,52 @@ describe("matches the numbers shown on eldenring.tclark.io", () => {
     const shown = displayAR(calculateAR(uchigatana, stats, 25));
     expect(shown.parts.physical).toBe(382);
     expect(shown.total).toBe(382);
+  });
+});
+describe("detail and scaling letters", () => {
+  // from regulation-vanilla-v1.17 (data.scalingTiers)
+  const tiers: [number, string][] = [
+    [1.75, "S"], [1.4, "A"], [0.9, "B"], [0.6, "C"], [0.25, "D"], [0.01, "E"],
+  ];
+
+  it("scalingGrade picks the first tier whose threshold is reached", () => {
+    expect(scalingGrade(1.9, tiers)).toBe("S");
+    expect(scalingGrade(0.6, tiers)).toBe("C"); // threshold counts as reached
+    expect(scalingGrade(0.59, tiers)).toBe("D");
+    expect(scalingGrade(0.01, tiers)).toBe("E");
+    expect(scalingGrade(0.005, tiers)).toBe("-");
+    expect(scalingGrade(undefined, tiers)).toBe("-");
+  });
+
+  it("calculateARDetail splits base and bonus", () => {
+    const detail = calculateARDetail(testSword, testCharacter, 1);
+    expect(detail.damage.physical!.base).toBeCloseTo(110, 3);
+    expect(detail.damage.physical!.bonus).toBeCloseTo(22.825, 3);
+    expect(detail.damage.physical!.total).toBeCloseTo(132.825, 3);
+    expect(detail.damage.physical!.penalized).toBe(false);
+    expect(detail.unmet).toEqual([]);
+  });
+
+  it("calculateARDetail reports unmet requirements and the penalty", () => {
+    const weak = { ...testCharacter, str: 5 };
+    const detail = calculateARDetail(testSword, weak, 1);
+    expect(detail.unmet).toEqual(["str"]);
+    expect(detail.damage.physical!.penalized).toBe(true);
+    expect(detail.damage.physical!.total).toBeCloseTo(66, 3);
+    expect(detail.damage.physical!.bonus).toBeCloseTo(-44, 3);
+  });
+
+  it("scaling letters match eldenring.tclark.io", () => {
+    const grade = (name: string, level: number, stat: "str" | "dex" | "int") =>
+      scalingGrade(weapons.find((w) => w.name === name)!.attributeScaling[level][stat], tiers);
+
+    // Moonveil +10: Str E, Dex B, Int B
+    expect(grade("Moonveil", 10, "str")).toBe("E");
+    expect(grade("Moonveil", 10, "dex")).toBe("B");
+    expect(grade("Moonveil", 10, "int")).toBe("B");
+    // Uchigatana +25: Str D, Dex C (no Int scaling)
+    expect(grade("Uchigatana", 25, "str")).toBe("D");
+    expect(grade("Uchigatana", 25, "dex")).toBe("C");
+    expect(grade("Uchigatana", 25, "int")).toBe("-");
   });
 });

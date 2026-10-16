@@ -1,22 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { adjustForTwoHanding, ALWAYS_TWO_HANDED, calculateAR } from "../calculateAR";
+import type { ScalingTiers } from "../calculateAR";
 import { makeBuilder } from "../engine/buildWeapon";
-import { allDamageTypes, type Weapon } from "../weapon";
 import type { Attributes } from "../attributes";
+import type { Weapon } from "../weapon";
 import { loadRegulation } from "./loadRegulation";
-import { displayAR } from "../calculateAR";
-const STAT_FIELDS = ["str", "dex", "int", "fai", "arc"] as const;
+import { parseStat, type StatField, type StatText } from "./stats";
+import StatsForm from "./components/StatsForm";
+import WeaponCard from "./components/WeaponCard";
+import WeaponPicker from "./components/WeaponPicker";
 
 // staves (57), seals (61) and torches (87): their value is spell scaling, which v1 doesn't model
 const HIDDEN_TYPES = [57, 61, 87];
-type StatField = (typeof STAT_FIELDS)[number];
 
-// text -> a valid stat (1 to 99); empty or invalid text counts as 1
-function parseStat(text: string): number {
-  const n = Math.floor(Number(text));
-  if (!Number.isFinite(n) || n < 1) return 1;
-  return Math.min(99, n);
-}
 export default function App() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -24,17 +19,18 @@ export default function App() {
   const [selected, setSelected] = useState<number | null>(null); // index into data.weapons
   const [level, setLevel] = useState(0);
   const [twoHanding, setTwoHanding] = useState(false);
-  const [statText, setStatText] = useState<Record<StatField, string>>({
-  str: "18", dex: "18", int: "10", fai: "10", arc: "10",
-});
-const stats: Attributes = {
-  vig: 20, mnd: 10, end: 20,
-  str: parseStat(statText.str),
-  dex: parseStat(statText.dex),
-  int: parseStat(statText.int),
-  fai: parseStat(statText.fai),
-  arc: parseStat(statText.arc),
-};
+  const [statText, setStatText] = useState<StatText>({
+    str: "18", dex: "18", int: "10", fai: "10", arc: "10",
+  });
+
+  const stats: Attributes = {
+    vig: 20, mnd: 10, end: 20,
+    str: parseStat(statText.str),
+    dex: parseStat(statText.dex),
+    int: parseStat(statText.int),
+    fai: parseStat(statText.fai),
+    arc: parseStat(statText.arc),
+  };
 
   // load the data once, when the page opens
   useEffect(() => {
@@ -60,119 +56,63 @@ const stats: Attributes = {
 
   // the selected weapon, built on demand
   const weapon = useMemo<Weapon | null>(() => {
-  if (!data || !build || selected === null) return null;
-  return build(data.weapons[selected]);
+    if (!data || !build || selected === null) return null;
+    return build(data.weapons[selected]);
   }, [data, build, selected]);
+
+  function changeStat(stat: StatField, text: string) {
+    setStatText({ ...statText, [stat]: text });
+  }
 
   if (error) return <p>Something went wrong: {error}</p>;
   if (!data) return <p>Loading weapon data...</p>;
 
-  // values derived from the selected weapon and the inputs
-  let details = null;
-  if (weapon) {
-    const maxLevel = weapon.attack.length - 1;
-    const safeLevel = Math.min(level, maxLevel);
-    const alwaysTwoHanded =
-      weapon.weaponType !== undefined && ALWAYS_TWO_HANDED.includes(weapon.weaponType);
-    const effective = adjustForTwoHanding(weapon, stats, twoHanding);
-    const unmet = Object.entries(weapon.requirements).filter(
-      ([stat, req]) => effective[stat as keyof Attributes] < (req ?? 0)
-    );
-
-    const result = calculateAR(weapon, stats, safeLevel, twoHanding);
-    const shown = displayAR(result);
-    const rows = allDamageTypes
-      .filter((type) => shown.parts[type] !== undefined)
-      .map((type) => [type, shown.parts[type]!] as const);
-    const total = shown.total;
-
-    details = (
-      <>
-        <h2>{weapon.name}</h2>
-        <p>
-          <label>
-            Level{" "}
-            <select value={safeLevel} onChange={(e) => setLevel(Number(e.target.value))}>
-              {Array.from({ length: maxLevel + 1 }, (_, i) => (
-                <option key={i} value={i}>+{i}</option>
-              ))}
-            </select>
-          </label>{" "}
-          <label>
-            <input
-              type="checkbox"
-              checked={alwaysTwoHanded || twoHanding}
-              disabled={alwaysTwoHanded || weapon.paired}
-              onChange={(e) => setTwoHanding(e.target.checked)}
-            />{" "}
-            Two-handing
-            {alwaysTwoHanded && " (always)"}
-            {weapon.paired && " (no bonus for paired weapons)"}
-          </label>
-        </p>
-
-        <p>
-          {STAT_FIELDS.map((stat) => (
-            <label key={stat} style={{ marginRight: 12 }}>
-              {stat.toUpperCase()}{" "}
-              <input
-                type="text"
-                inputMode="numeric"
-                value={statText[stat]}
-                onChange={(e) =>
-                  setStatText({ ...statText, [stat]: e.target.value.replace(/\D/g, "").slice(0, 2) })
-                }
-                onBlur={() => setStatText({ ...statText, [stat]: String(parseStat(statText[stat])) })}
-                style={{ width: 52 }}
-              />
-            </label>
-          ))}
-        </p>
-
-        {unmet.length > 0 && (
-          <p>
-            Requirement not met: {unmet.map(([stat, req]) => `${stat.toUpperCase()} ${req}`).join(", ")}
-            . Damage is reduced for the types that scale with it.
-          </p>
-        )}
-
-        <h3>Attack rating</h3>
-        <ul>
-          {rows.map(([type, value]) => (
-            <li key={type}>{type}: {value}</li>
-          ))}
-        </ul>
-        <strong>Total: {total}</strong>
-      </>
-    );
-  }
-
   return (
-    <main style={{ maxWidth: 520, margin: "2rem auto", fontFamily: "sans-serif" }}>
-      <h1>Soulslike Build Planner</h1>
+    <div className="app">
+      <header className="app-header">
+        <h1>Soulslike Build Planner</h1>
+      </header>
 
-      <input
-        type="search"
-        placeholder="Search weapons..."
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        style={{ width: "100%", padding: 6 }}
-      />
-      <ul style={{ maxHeight: 200, overflowY: "auto", paddingLeft: 16 }}>
-        {matches.map((m) => (
-          <li key={m.index}>
-            <button
-              onClick={() => setSelected(m.index)}
-              style={{ fontWeight: m.index === selected ? "bold" : "normal" }}
-            >
-              {m.name}
-            </button>
-          </li>
-        ))}
-        {matches.length === 0 && <li>No weapons match.</li>}
-      </ul>
+      <main className="layout">
+        <aside className="inputs">
+          <WeaponPicker
+            query={query}
+            onQueryChange={setQuery}
+            matches={matches}
+            selected={selected}
+            onSelect={setSelected}
+          />
+          <StatsForm statText={statText} onChange={changeStat} />
+        </aside>
 
-      {details ?? <p>Pick a weapon to see its attack rating.</p>}
-    </main>
+        <section className="output">
+          {weapon ? (
+            <WeaponCard
+              weapon={weapon}
+              stats={stats}
+              tiers={data.scalingTiers as ScalingTiers}
+              level={level}
+              onLevelChange={setLevel}
+              twoHanding={twoHanding}
+              onTwoHandingChange={setTwoHanding}
+            />
+          ) : (
+            <p className="empty">Pick a weapon to see its attack rating.</p>
+          )}
+        </section>
+      </main>
+
+      <footer className="app-footer">
+        <p>
+          Fan-made, non-commercial project, not affiliated with FromSoftware or Bandai Namco. Weapon
+          data and the scaling-curve code come from{" "}
+          <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
+            elden-ring-weapon-calculator
+          </a>{" "}
+          (MIT). Game data belongs to FromSoftware / Bandai Namco.{" "}
+          <a href="https://github.com/Raed-Jani/soulslike-build-planner">Source code</a>
+        </p>
+      </footer>
+    </div>
   );
 }
