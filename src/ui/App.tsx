@@ -4,7 +4,7 @@ import { makeBuilder } from "../engine/buildWeapon";
 import { allDamageTypes, type Weapon } from "../weapon";
 import type { Attributes } from "../attributes";
 import { loadRegulation } from "./loadRegulation";
-
+import { displayAR } from "../calculateAR";
 const STAT_FIELDS = ["str", "dex", "int", "fai", "arc"] as const;
 
 // staves (57), seals (61) and torches (87): their value is spell scaling, which v1 doesn't model
@@ -80,11 +80,11 @@ const stats: Attributes = {
     );
 
     const result = calculateAR(weapon, stats, safeLevel, twoHanding);
-    // like the game: round each damage type down, then add them up
+    const shown = displayAR(result);
     const rows = allDamageTypes
-      .filter((type) => result[type] !== undefined)
-      .map((type) => [type, Math.floor(result[type]!)] as const);
-    const total = rows.reduce((sum, [, value]) => sum + value, 0);
+      .filter((type) => shown.parts[type] !== undefined)
+      .map((type) => [type, shown.parts[type]!] as const);
+    const total = shown.total;
 
     details = (
       <>

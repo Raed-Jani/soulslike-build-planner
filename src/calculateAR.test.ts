@@ -4,6 +4,8 @@ import { testCharacter } from "./attributes";
 import { calculateAR, totalAR } from "./calculateAR";
 import { weapons } from "./data/weapons";
 import type { Attributes } from "./attributes";
+import {displayAR} from "./calculateAR";
+
 describe("calculateAR", () => {
   it("computes physical AR for testSword at +1", () => {
     const result = calculateAR(testSword, testCharacter, 1);
@@ -83,5 +85,23 @@ describe("calculateAR", () => {
     };
     const result = calculateAR(partial, testCharacter, 1);
     expect(result.physical).toBeCloseTo(125.675, 2);
+  });
+});
+describe("matches the numbers shown on eldenring.tclark.io", () => {
+  const stats = { vig: 20, mnd: 10, end: 20, str: 12, dex: 24, int: 40, fai: 10, arc: 10 };
+
+  it("Moonveil +10: physical 238, magic 366, total 605", () => {
+    const moonveil = weapons.find((w) => w.name === "Moonveil")!;
+    const shown = displayAR(calculateAR(moonveil, stats, 10));
+    expect(shown.parts.physical).toBe(238);
+    expect(shown.parts.magic).toBe(366);
+    expect(shown.total).toBe(605);
+  });
+
+  it("Uchigatana +25: 382", () => {
+    const uchigatana = weapons.find((w) => w.name === "Uchigatana")!;
+    const shown = displayAR(calculateAR(uchigatana, stats, 25));
+    expect(shown.parts.physical).toBe(382);
+    expect(shown.total).toBe(382);
   });
 });

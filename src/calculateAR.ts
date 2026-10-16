@@ -77,3 +77,12 @@ export function totalAR(ar: AttackResult): number {
   }
   return sum;
 }
+// What the game shows: each damage type rounded down, and a total that is the
+// rounded-down sum of the unrounded values (so it can exceed the sum of the shown parts).
+export function displayAR(ar: AttackResult) {
+  const parts: Partial<Record<DamageType, number>> = {};
+  for (const type of allDamageTypes) {
+    if (ar[type] !== undefined) parts[type] = Math.floor(ar[type]!);
+  }
+  return { parts, total: Math.floor(totalAR(ar)) };
+}
