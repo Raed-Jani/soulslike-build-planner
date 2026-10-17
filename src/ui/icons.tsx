@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from "react";
+import type { StatusType } from "../weapon";
 
 export type IconName =
   | "physical" | "magic" | "fire" | "lightning" | "holy"
@@ -91,5 +92,30 @@ export function Icon({ name, size = 22, label }: { name: IconName; size?: number
       {label && <title>{label}</title>}
       {PATHS[name]}
     </svg>
+  );
+}
+const STATUS_ICON_FILES: Record<StatusType, string> = {
+  poison: "poisonStatus.webp",
+  scarletRot: "scarletRotStatus.webp",
+  bleed: "bleedStatus.webp",
+  frost: "frostStatus.webp",
+  sleep: "sleepStatus.webp",
+  madness: "madnessStatus.webp",
+  deathBlight: "deathBlightStatus.webp",
+};
+
+export function StatusIcon({ type, label, size = 22 }: { type: StatusType; label?: string; size?: number }) {
+  const [failed, setFailed] = useState(false);
+  if (!USE_GAME_ICONS || failed) return null;
+  return (
+    <img
+      className="icon icon-img"
+      src={`${import.meta.env.BASE_URL}img/game/${STATUS_ICON_FILES[type]}`}
+      width={size}
+      height={size}
+      alt={label ?? ""}
+      title={label}
+      onError={() => setFailed(true)}
+    />
   );
 }

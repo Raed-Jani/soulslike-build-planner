@@ -1,3 +1,4 @@
+import { fakeCurve } from "./curves";
 import { describe, it, expect } from "vitest";
 import { testSword } from "./weapon";
 import { testCharacter } from "./attributes";
@@ -152,5 +153,40 @@ describe("detail and scaling letters", () => {
     expect(grade("Uchigatana", 25, "str")).toBe("D");
     expect(grade("Uchigatana", 25, "dex")).toBe("C");
     expect(grade("Uchigatana", 25, "int")).toBe("-");
+  });
+});
+describe("status buildup", () => {
+  const stats = { vig: 20, mnd: 10, end: 20, str: 12, dex: 24, int: 40, fai: 10, arc: 10 };
+  const bleed = (name: string, level: number) => {
+    const weapon = weapons.find((w) => w.name === name)!;
+    return Math.floor(calculateARDetail(weapon, stats, level).status.bleed!.total);
+  };
+
+  it("matches the blood loss shown on eldenring.tclark.io", () => {
+    expect(bleed("Uchigatana", 25)).toBe(45);
+    expect(bleed("Moonveil", 10)).toBe(50);
+  });
+
+  it("weapons without status have none", () => {
+    expect(calculateARDetail(testSword, testCharacter, 1).status).toEqual({});
+  });
+
+  it("Arcane scales blood loss, and a missing Arcane requirement penalizes it", () => {
+    const bleeder = {
+      ...testSword,
+      status: [{}, { bleed: 50 }],
+      statusCurves: { bleed: fakeCurve },
+      attributeScaling: [
+        testSword.attributeScaling[0],
+        { ...testSword.attributeScaling[1], arc: 0.5 },
+      ],
+    };
+    // Arcane 10: fakeCurve(10) = 0.125, so 50 * (1 + 0.125 * 0.5) = 53.125
+    expect(calculateARDetail(bleeder, testCharacter, 1).status.bleed!.total).toBeCloseTo(53.125, 3);
+
+    const demanding = { ...bleeder, requirements: { ...bleeder.requirements, arc: 20 } };
+    const detail = calculateARDetail(demanding, testCharacter, 1);
+    expect(detail.status.bleed!.total).toBeCloseTo(30, 3); // 50 * 0.6
+    expect(detail.status.bleed!.penalized).toBe(true);
   });
 });

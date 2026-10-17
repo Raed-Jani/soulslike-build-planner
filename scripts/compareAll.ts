@@ -1,9 +1,7 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import { makeBuilder } from "../src/engine/buildWeapon";
-import { calculateAR } from "../src/calculateAR";
-import { decodeRegulationData } from "../../reference-calculator/src/regulationData";
-import getWeaponAttack from "../../reference-calculator/src/calculator/calculator";
+import { calculateAR, calculateARDetail } from "../src/calculateAR";
+import { makeBuilder, STATUS_IDS } from "../src/engine/buildWeapon";
+import { allStatusTypes } from "../src/weapon";
+
 
 const file = resolve("public", "data", "regulation-vanilla-v1.17.json");
 const data = JSON.parse(readFileSync(file, "utf8"));
@@ -39,6 +37,16 @@ data.weapons.forEach((raw: any, i: number) => {
         }).attackPower;
 
         TYPES.forEach((type, id) => {
+          const detail = calculateARDetail(mine as any, { vig: 20, mnd: 10, end: 20, ...stats } as any, level, twoHanding);
+allStatusTypes.forEach((type) => {
+  checks++;
+  const x = detail.status[type]?.total ?? 0;
+  const y = b[STATUS_IDS[type]] ?? 0;
+  if (Math.abs(x - y) > 1e-6 && !failures.has(raw.name)) {
+    failures.set(raw.name, `status ${type} lvl ${level} stats ${JSON.stringify(stats)} twoHanded=${twoHanding}: mine ${x} theirs ${y}`);
+    failuresByType.set(raw.weaponType, (failuresByType.get(raw.weaponType) ?? 0) + 1);
+  }
+});
           checks++;
           const x = a[type] ?? 0;
           const y = b[id] ?? 0;
@@ -47,7 +55,8 @@ data.weapons.forEach((raw: any, i: number) => {
               raw.name,
               `${type} lvl ${level} stats ${JSON.stringify(stats)} twoHanded=${twoHanding}: mine ${x} theirs ${y}`
             );
-            failuresByType.set(raw.weaponType, (failuresByType.get(raw.weaponType) ?? 0) + 1);
+            failuresByType.set(raw.weaponType, (failuresByType.get(raw.weaponType) ?? 0) + 1);¨
+            
           }
         });
       }

@@ -4,10 +4,30 @@
 // See THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt
 import type { Attribute } from "../attributes";
 import type { Curve } from "../curves";
-import type { AttackElementCorrect, DamageType, Weapon } from "../weapon";
+import {
+  allStatusTypes,
+  ARC_SCALED_STATUS,
+  type AttackElementCorrect,
+  type DamageType,
+  type StatusType,
+  type Weapon,
+} from "../weapon";
 
 export const DAMAGE_TYPES: readonly DamageType[] = ["physical", "magic", "fire", "lightning", "holy"];
+
+// the numbers the game data uses for each status effect (checked by buildWeapon.test.ts)
+export const STATUS_IDS: Record<StatusType, number> = {
+  poison: 5,
+  scarletRot: 6,
+  bleed: 7,
+  frost: 8,
+  sleep: 9,
+  madness: 10,
+  deathBlight: 11,
+};
+
 const DEFAULT_GRAPH_ID = 0;
+const DEFAULT_STATUS_GRAPH_ID = 6;
 
 // A curve is stored as a few stages. Turn it into an array: curve[stat] for stat 0..148
 // (148 because two-handing can push Strength to 99 * 1.5).
@@ -45,7 +65,7 @@ export function makeBuilder(data: any) {
     const attack: Weapon["attack"] = reinforce.map((row) => {
       const level: Partial<Record<DamageType, number>> = {};
       for (const [id, base] of w.attack as [number, number][]) {
-        if (id > 4) continue; // ignore status buildup
+        if (id > 4) continue; // status buildup is built below
         level[DAMAGE_TYPES[id]] = base * (row.attack[id] ?? 0);
       }
       return level;
@@ -74,6 +94,33 @@ export function makeBuilder(data: any) {
       calcCorrectGraphs[type] = getCurve(w.calcCorrectGraphIds?.[id] ?? DEFAULT_GRAPH_ID);
     });
 
+    // status buildup per level: the weapon points at status parameters, and each upgrade
+    // level shifts the parameter id by an offset
+    const status = reinforce.map((row) => {
+      const level: Partial<Record<StatusType, number>> = {};
+      const offsets = [row.statusSpEffectId1, row.statusSpEffectId2, row.statusSpEffectId3];
+      ((w.statusSpEffectParamIds ?? []) as number[]).forEach((id, i) => {
+        if (!id) return;
+        const param = data.statusSpEffectParams[id + (offsets[i] ?? 0)];
+        if (!param) return;
+        for (const type of allStatusTypes) {
+          const value = param[STATUS_IDS[type]];
+          if (value) level[type] = value;
+        }
+      });
+      return level;
+    });
+    const hasStatus = status.some((level) => Object.keys(level).length > 0);
+
+    const statusCurves: Partial<Record<StatusType, Curve>> = {};
+    if (hasStatus) {
+      for (const type of ARC_SCALED_STATUS) {
+        statusCurves[type] = getCurve(
+          w.calcCorrectGraphIds?.[STATUS_IDS[type]] ?? DEFAULT_STATUS_GRAPH_ID
+        );
+      }
+    }
+
     return {
       name: w.name,
       weaponType: w.weaponType,
@@ -83,6 +130,8 @@ export function makeBuilder(data: any) {
       attributeScaling,
       attackElementCorrect,
       calcCorrectGraphs,
+      status: hasStatus ? status : undefined,
+      statusCurves: hasStatus ? statusCurves : undefined,
     };
   };
 }

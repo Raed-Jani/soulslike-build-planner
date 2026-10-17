@@ -3,6 +3,12 @@ import {fakeCurve} from "./curves";
 import type { Attribute } from "./attributes";
 export const allDamageTypes = ["physical", "magic", "fire", "lightning", "holy"] as const;
 export type DamageType = (typeof allDamageTypes)[number];
+export const allStatusTypes = [
+  "poison", "scarletRot", "bleed", "frost", "sleep", "madness", "deathBlight",
+] as const;
+export type StatusType = (typeof allStatusTypes)[number];
+// only these statuses scale with Arcane in the vanilla game
+export const ARC_SCALED_STATUS: readonly StatusType[] = ["poison", "bleed", "sleep", "madness"];
 export type AttackElementCorrect = Partial<
   Record<DamageType, Partial<Record<Attribute, number | true>>>
 >;
@@ -18,6 +24,10 @@ export interface Weapon {
     attackElementCorrect: AttackElementCorrect;
     weaponType?: number;
     paired?: boolean;
+      // base status buildup per upgrade level (missing when the weapon has none)
+    status?: Partial<Record<StatusType, number>>[];
+      // curves for the statuses that scale with Arcane
+    statusCurves?: Partial<Record<StatusType, Curve>>;
 } 
 
 //test

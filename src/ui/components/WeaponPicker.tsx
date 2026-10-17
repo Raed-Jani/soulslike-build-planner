@@ -7,18 +7,47 @@ interface Match {
   affinity: AffinityKey;
 }
 
+interface Chosen {
+  index: number;
+  name: string;
+  affinity?: AffinityKey;
+}
+
 interface Props {
   query: string;
   onQueryChange: (query: string) => void;
   matches: Match[];
-  picked: number[];
+  chosen: Chosen[];
   onToggle: (index: number) => void;
 }
 
-export default function WeaponPicker({ query, onQueryChange, matches, picked, onToggle }: Props) {
+export default function WeaponPicker({ query, onQueryChange, matches, chosen, onToggle }: Props) {
+  const pickedSet = new Set(chosen.map((c) => c.index));
+
   return (
     <section className="weapon-picker">
       <h2>Weapon</h2>
+
+      {chosen.length > 0 && (
+        <div className="chosen">
+          <h3>Selected ({chosen.length})</h3>
+          <ul>
+            {chosen.map((c) => {
+              const info = affinityInfo(c.affinity);
+              return (
+                <li key={c.index}>
+                  {info && <Icon name={info.icon} size={18} label={info.label} />}
+                  <span>{c.name}</span>
+                  <button type="button" aria-label={`Remove ${c.name}`} onClick={() => onToggle(c.index)}>
+                    ×
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
       <input
         type="search"
         placeholder="Search weapons..."
@@ -28,7 +57,7 @@ export default function WeaponPicker({ query, onQueryChange, matches, picked, on
       />
       <ul className="weapon-results">
         {matches.map((m) => {
-          const isPicked = picked.includes(m.index);
+          const isPicked = pickedSet.has(m.index);
           const info = affinityInfo(m.affinity);
           return (
             <li key={m.index}>
@@ -40,6 +69,7 @@ export default function WeaponPicker({ query, onQueryChange, matches, picked, on
               >
                 {info && <Icon name={info.icon} size={20} label={info.label} />}
                 <span>{m.name}</span>
+                {isPicked && <span className="check" aria-hidden="true">✓</span>}
               </button>
             </li>
           );

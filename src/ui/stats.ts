@@ -1,3 +1,4 @@
+import type { StatusType } from "../weapon";
 export const STAT_FIELDS = ["str", "dex", "int", "fai", "arc"] as const;
 export type StatField = (typeof STAT_FIELDS)[number];
 export type StatText = Record<StatField, string>;
@@ -15,3 +16,12 @@ export function parseStat(text: string): number {
   if (!Number.isFinite(n) || n < 1) return 1;
   return Math.min(99, n);
 }
+export const STATUS_LABELS: Record<StatusType, string> = {
+  poison: "Poison",
+  scarletRot: "Scarlet rot",
+  bleed: "Blood loss",
+  frost: "Frostbite",
+  sleep: "Sleep",
+  madness: "Madness",
+  deathBlight: "Death blight",
+};

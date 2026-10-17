@@ -205,9 +205,66 @@ input[type="checkbox"] {
 }
 
 .weapon-results button.selected {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
   color: var(--accent);
   box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.weapon-results .check {
+  margin-left: auto;
+}
+
+.chosen {
+  margin-bottom: 12px;
+}
+
+.chosen h3 {
+  margin: 0 0 6px;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.chosen ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chosen li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
+  box-shadow: inset 3px 0 0 var(--accent);
+  color: var(--accent);
+}
+
+.chosen li span {
+  flex: 1;
+}
+
+.chosen li button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chosen li button:hover {
+  color: var(--danger);
 }
 
 .no-match {
@@ -502,6 +559,32 @@ input[type="checkbox"] {
   background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
 /* ---------- phones ---------- */
+.status-panel {
+  grid-column: 1 / -1;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.status-panel ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+}
+
+.status-panel li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-panel li[data-unmet] {
+  color: var(--danger);
+}
+
+.status-panel strong {
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+}
 
 @media (max-width: 760px) {
   .app {

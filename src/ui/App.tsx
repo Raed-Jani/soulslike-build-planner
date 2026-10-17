@@ -115,7 +115,7 @@ export default function App() {
             query={query}
             onQueryChange={setQuery}
             matches={matches}
-            picked={picked}
+            chosen={built.map(({ index, weapon, affinity }) => ({ index, name: weapon.name, affinity }))}
             onToggle={togglePick}
           />
           <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
@@ -166,10 +166,9 @@ export default function App() {
             <h3>Credits</h3>
             <ul>
               <li>
-                <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
-                  elden-ring-weapon-calculator
-                </a>{" "}
-                by Tom Clark: weapon data and curve code (MIT)
+                Fan-made, non-commercial project, not affiliated with or endorsed by FromSoftware or
+            Bandai Namco. ELDEN RING, its weapon data, names and icons belong to FromSoftware /
+            Bandai Namco.
               </li>
               <li>Data version: patch 1.17</li>
             </ul>
@@ -179,11 +178,6 @@ export default function App() {
           <p>
             © 2026 <a href="https://github.com/Raed-Jani">Raed Jani</a>. Released under the MIT
             license.
-          </p>
-          <p>
-            Fan-made, non-commercial project, not affiliated with or endorsed by FromSoftware or
-            Bandai Namco. ELDEN RING, its weapon data, names and icons belong to FromSoftware /
-            Bandai Namco.
           </p>
         </div>
       </footer>

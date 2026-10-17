@@ -1,4 +1,11 @@
-import { allDamageTypes, type DamageType, type Weapon } from "./weapon";
+import {
+  allDamageTypes,
+  allStatusTypes,
+  ARC_SCALED_STATUS,
+  type DamageType,
+  type StatusType,
+  type Weapon,
+} from "./weapon";
 import { allAttributes, type Attribute, type Attributes } from "./attributes";
 
 const INEFFECTIVE_PENALTY = 0.4;
@@ -16,8 +23,15 @@ export interface DamageDetail {
   penalized: boolean; // true when a requirement penalty replaced the scaling bonus
 }
 
+export interface StatusDetail {
+  base: number; // buildup before Arcane scaling
+  total: number; // unrounded
+  penalized: boolean; // true when the Arcane requirement is not met
+}
+
 export interface ARDetail {
   damage: Partial<Record<DamageType, DamageDetail>>;
+  status: Partial<Record<StatusType, StatusDetail>>;
   unmet: Attribute[]; // stats below the weapon's requirement (after two-handing)
 }
 
@@ -82,7 +96,29 @@ export function calculateARDetail(
     damage[type] = { base, bonus: total - base, total, penalized };
   }
 
-  return { damage, unmet };
+  // status buildup: only some effects scale with Arcane
+  const status: ARDetail["status"] = {};
+  const levelStatus = weapon.status?.[upgradeLevel] ?? {};
+  for (const type of allStatusTypes) {
+    const base = levelStatus[type] ?? 0;
+    if (base === 0) continue;
+
+    let multiplier = 1;
+    let penalized = false;
+    if (ARC_SCALED_STATUS.includes(type)) {
+      if (unmet.includes("arc")) {
+        multiplier = 1 - INEFFECTIVE_PENALTY;
+        penalized = true;
+      } else {
+        const arcScaling = weapon.attributeScaling[upgradeLevel].arc ?? 0;
+        const curve = weapon.statusCurves?.[type];
+        if (arcScaling && curve) multiplier += curve[stats.arc] * arcScaling;
+      }
+    }
+    status[type] = { base, total: base * multiplier, penalized };
+  }
+
+  return { damage, status, unmet };
 }
 
 export function calculateAR(

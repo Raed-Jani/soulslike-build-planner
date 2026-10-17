@@ -26,7 +26,7 @@ export default function AttackPanel({ damage }: { damage: ARDetail["damage"] }) 
         {rows.map((r) => (
           <li key={r.type}>
             <span className="damage-type">
-              <Icon name={r.type} />
+              <Icon name={r.type} label={r.type[0].toUpperCase() + r.type.slice(1)} />
               {r.type}
             </span>
             <strong className="damage-total">{r.total}</strong>
