@@ -1,5 +1,6 @@
 import { displayAR, type ARDetail, type AttackResult } from "../../calculateAR";
 import { allDamageTypes } from "../../weapon";
+import { Icon } from "../icons";
 
 export default function AttackPanel({ damage }: { damage: ARDetail["damage"] }) {
   // the game's rounding: each type rounded down, total = rounded-down sum of the unrounded values
@@ -23,8 +24,11 @@ export default function AttackPanel({ damage }: { damage: ARDetail["damage"] }) 
       <h3>Attack power</h3>
       <ul>
         {rows.map((r) => (
-          <li key={r.type} data-type={r.type}>
-            <span className="damage-type">{r.type}</span>
+          <li key={r.type}>
+            <span className="damage-type">
+              <Icon name={r.type} />
+              {r.type}
+            </span>
             <strong className="damage-total">{r.total}</strong>
             <span className="damage-split">
               {r.base} {r.bonus >= 0 ? "+" : "−"} {Math.abs(r.bonus)}

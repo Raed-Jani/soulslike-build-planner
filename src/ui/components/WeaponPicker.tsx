@@ -7,11 +7,11 @@ interface Props {
   query: string;
   onQueryChange: (query: string) => void;
   matches: Match[];
-  selected: number | null;
-  onSelect: (index: number) => void;
+  picked: number[];
+  onToggle: (index: number) => void;
 }
 
-export default function WeaponPicker({ query, onQueryChange, matches, selected, onSelect }: Props) {
+export default function WeaponPicker({ query, onQueryChange, matches, picked, onToggle }: Props) {
   return (
     <section className="weapon-picker">
       <h2>Weapon</h2>
@@ -23,18 +23,21 @@ export default function WeaponPicker({ query, onQueryChange, matches, selected, 
         onChange={(e) => onQueryChange(e.target.value)}
       />
       <ul className="weapon-results">
-        {matches.map((m) => (
-          <li key={m.index}>
-            <button
-              type="button"
-              className={m.index === selected ? "selected" : ""}
-              aria-pressed={m.index === selected}
-              onClick={() => onSelect(m.index)}
-            >
-              {m.name}
-            </button>
-          </li>
-        ))}
+        {matches.map((m) => {
+          const isPicked = picked.includes(m.index);
+          return (
+            <li key={m.index}>
+              <button
+                type="button"
+                className={isPicked ? "selected" : ""}
+                aria-pressed={isPicked}
+                onClick={() => onToggle(m.index)}
+              >
+                {m.name}
+              </button>
+            </li>
+          );
+        })}
         {matches.length === 0 && <li className="no-match">No weapons match.</li>}
       </ul>
     </section>

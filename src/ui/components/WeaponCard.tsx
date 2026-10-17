@@ -18,10 +18,11 @@ interface Props {
   onLevelChange: (level: number) => void;
   twoHanding: boolean;
   onTwoHandingChange: (value: boolean) => void;
+  onRemove: () => void;
 }
 
 export default function WeaponCard({
-  weapon, stats, tiers, level, onLevelChange, twoHanding, onTwoHandingChange,
+  weapon, stats, tiers, level, onLevelChange, twoHanding, onTwoHandingChange, onRemove,
 }: Props) {
   const maxLevel = weapon.attack.length - 1;
   const safeLevel = Math.min(level, maxLevel);
@@ -34,7 +35,17 @@ export default function WeaponCard({
   return (
     <article className="weapon-card">
       <header>
-        <h2>{weapon.name}</h2>
+        <div className="card-title">
+          <h2>{weapon.name}</h2>
+          <button
+            type="button"
+            className="remove"
+            aria-label={`Remove ${weapon.name}`}
+            onClick={onRemove}
+          >
+            ×
+          </button>
+        </div>
         <label>
           Level{" "}
           <select value={safeLevel} onChange={(e) => onLevelChange(Number(e.target.value))}>
@@ -42,7 +53,7 @@ export default function WeaponCard({
               <option key={i} value={i}>+{i}</option>
             ))}
           </select>
-        </label>{" "}
+        </label>
         <label>
           <input
             type="checkbox"

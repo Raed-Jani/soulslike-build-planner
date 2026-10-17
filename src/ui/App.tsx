@@ -1,24 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ScalingTiers } from "../calculateAR";
-import { makeBuilder } from "../engine/buildWeapon";
 import type { Attributes } from "../attributes";
-import type { Weapon } from "../weapon";
+import { makeBuilder } from "../engine/buildWeapon";
+import { affinityKeyOf, type AffinityKey } from "./affinities";
 import { loadRegulation } from "./loadRegulation";
 import { parseStat, type StatField, type StatText } from "./stats";
+import AffinityFilter from "./components/AffinityFilter";
 import StatsForm from "./components/StatsForm";
 import WeaponCard from "./components/WeaponCard";
 import WeaponPicker from "./components/WeaponPicker";
 
 // staves (57), seals (61) and torches (87): their value is spell scaling, which v1 doesn't model
 const HIDDEN_TYPES = [57, 61, 87];
+const REPO = "https://github.com/Raed-Jani/soulslike-build-planner";
 
 export default function App() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<number | null>(null); // index into data.weapons
-  const [level, setLevel] = useState(0);
-  const [twoHanding, setTwoHanding] = useState(false);
+  const [affinities, setAffinities] = useState<Set<AffinityKey>>(new Set(["standard", "unique"]));
+  const [picked, setPicked] = useState<number[]>([]); // indexes into data.weapons
+  const [levels, setLevels] = useState<Record<number, number>>({});
+  const [twoHandings, setTwoHandings] = useState<Record<number, boolean>>({});
   const [statText, setStatText] = useState<StatText>({
     str: "18", dex: "18", int: "10", fai: "10", arc: "10",
   });
@@ -32,7 +35,6 @@ export default function App() {
     arc: parseStat(statText.arc),
   };
 
-  // load the data once, when the page opens
   useEffect(() => {
     loadRegulation()
       .then(setData)
@@ -41,7 +43,7 @@ export default function App() {
 
   const build = useMemo(() => (data ? makeBuilder(data) : null), [data]);
 
-  // first 50 weapons whose name contains the search text
+  // first 50 weapons matching the search text and the ticked affinities
   const matches = useMemo(() => {
     if (!data) return [];
     const q = query.trim().toLowerCase();
@@ -49,16 +51,36 @@ export default function App() {
     for (let i = 0; i < data.weapons.length && found.length < 50; i++) {
       const w = data.weapons[i];
       if (HIDDEN_TYPES.includes(w.weaponType)) continue;
+      const key = affinityKeyOf(w.affinityId);
+      if (!key || !affinities.has(key)) continue;
       if (q === "" || w.name.toLowerCase().includes(q)) found.push({ index: i, name: w.name });
     }
     return found;
-  }, [data, query]);
+  }, [data, query, affinities]);
 
-  // the selected weapon, built on demand
-  const weapon = useMemo<Weapon | null>(() => {
-    if (!data || !build || selected === null) return null;
-    return build(data.weapons[selected]);
-  }, [data, build, selected]);
+  // the picked weapons, built once per change of selection
+  const built = useMemo(() => {
+    if (!data || !build) return [];
+    return picked.map((index) => ({ index, weapon: build(data.weapons[index]) }));
+  }, [data, build, picked]);
+
+  function togglePick(index: number) {
+    if (picked.includes(index)) {
+      setPicked(picked.filter((i) => i !== index));
+      return;
+    }
+    // new weapons start at their maximum level, like the reference calculator
+    const maxLevel = data.reinforceTypes[data.weapons[index].reinforceTypeId].length - 1;
+    setPicked([...picked, index]);
+    setLevels({ ...levels, [index]: maxLevel });
+  }
+
+  function toggleAffinity(key: AffinityKey) {
+    const next = new Set(affinities);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    setAffinities(next);
+  }
 
   function changeStat(stat: StatField, text: string) {
     setStatText({ ...statText, [stat]: text });
@@ -71,46 +93,78 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <h1>Soulslike Build Planner</h1>
+        <a className="github-link" href={REPO} aria-label="Source code on GitHub" title="Source code on GitHub">
+          <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
+            <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+          </svg>
+        </a>
       </header>
 
       <main className="layout">
         <aside className="inputs">
+          <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
           <WeaponPicker
             query={query}
             onQueryChange={setQuery}
             matches={matches}
-            selected={selected}
-            onSelect={setSelected}
+            picked={picked}
+            onToggle={togglePick}
           />
           <StatsForm statText={statText} onChange={changeStat} />
         </aside>
 
         <section className="output">
-          {weapon ? (
-            <WeaponCard
-              weapon={weapon}
-              stats={stats}
-              tiers={data.scalingTiers as ScalingTiers}
-              level={level}
-              onLevelChange={setLevel}
-              twoHanding={twoHanding}
-              onTwoHandingChange={setTwoHanding}
-            />
+          {built.length === 0 ? (
+            <p className="empty">Pick one or more weapons to see their attack rating.</p>
           ) : (
-            <p className="empty">Pick a weapon to see its attack rating.</p>
+            <div className="cards">
+              {built.map(({ index, weapon }) => (
+                <WeaponCard
+                  key={index}
+                  weapon={weapon}
+                  stats={stats}
+                  tiers={data.scalingTiers as ScalingTiers}
+                  level={levels[index] ?? 0}
+                  onLevelChange={(level) => setLevels({ ...levels, [index]: level })}
+                  twoHanding={twoHandings[index] ?? false}
+                  onTwoHandingChange={(value) => setTwoHandings({ ...twoHandings, [index]: value })}
+                  onRemove={() => setPicked(picked.filter((i) => i !== index))}
+                />
+              ))}
+            </div>
           )}
         </section>
       </main>
 
       <footer className="app-footer">
-        <p>
-          Fan-made, non-commercial project, not affiliated with FromSoftware or Bandai Namco. Weapon
-          data and the scaling-curve code come from{" "}
-          <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
-            elden-ring-weapon-calculator
-          </a>{" "}
-          (MIT). Game data belongs to FromSoftware / Bandai Namco.{" "}
-          <a href="https://github.com/Raed-Jani/soulslike-build-planner">Source code</a>
+        <div>
+          <h3>About</h3>
+          <p>
+            A free, open-source attack rating calculator for Elden Ring. Everything is calculated
+            in your browser, nothing is sent anywhere.
+          </p>
+        </div>
+        <div>
+          <h3>Credits</h3>
+          <p>
+            Weapon data (patch 1.17) and the scaling-curve code come from{" "}
+            <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
+              elden-ring-weapon-calculator
+            </a>{" "}
+            by Tom Clark (MIT).
+          </p>
+        </div>
+        <div>
+          <h3>Project</h3>
+          <ul>
+            <li><a href={REPO}>Source code</a></li>
+            <li><a href={`${REPO}/issues`}>Report an issue</a></li>
+            <li><a href={`${REPO}/blob/main/LICENSE`}>MIT license</a></li>
+          </ul>
+        </div>
+        <p className="disclaimer">
+          Fan-made, non-commercial project, not affiliated with or endorsed by FromSoftware or
+          Bandai Namco. ELDEN RING and its game data belong to FromSoftware / Bandai Namco.
         </p>
       </footer>
     </div>

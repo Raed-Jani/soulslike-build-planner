@@ -1,4 +1,8 @@
 :root {
+  --cold: #8fd0e8;
+  --poison: #7fbf6a;
+  --blood: #d4574a;
+  --occult: #b58fd9;
   --bg: #14110f;
   --surface: #1d1914;
   --surface-2: #26201a;
@@ -33,6 +37,16 @@ body {
   color: var(--text);
   font-family: var(--sans);
   line-height: 1.5;
+}
+
+.affinity-filter,
+.weapon-picker,
+.stats-form,
+.weapon-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px;
 }
 
 a {
@@ -81,9 +95,9 @@ h3 {
   gap: 16px;
 }
 
+.affinity-filter
 .weapon-picker,
-.stats-form,
-.weapon-card {
+.stats-form{
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -171,7 +185,127 @@ input[type="checkbox"] {
   font-variant-numeric: tabular-nums;
 }
 
-/* ---------- weapon card ---------- */
+/* ---------- empty state and footer ---------- */
+
+.empty {
+  padding: 32px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+}
+
+.app-footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+/* header and footer */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-header h1 {
+  margin: 8px 0;
+  font-size: 1.7rem;
+}
+
+.github-link {
+  display: inline-flex;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+.github-link:hover {
+  color: var(--accent);
+}
+
+.app-footer {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.app-footer h3 {
+  margin: 0 0 8px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-footer p {
+  margin: 0;
+}
+
+.app-footer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.app-footer .disclaimer {
+  grid-column: 1 / -1;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* icons */
+.icon { flex: none; vertical-align: middle; }
+.icon-physical, .icon-heavy, .icon-keen, .icon-quality { color: var(--physical); }
+.icon-magic { color: var(--magic); }
+.icon-fire { color: var(--fire); }
+.icon-lightning { color: var(--lightning); }
+.icon-holy { color: var(--holy); }
+.icon-cold { color: var(--cold); }
+.icon-poison { color: var(--poison); }
+.icon-blood { color: var(--blood); }
+.icon-occult { color: var(--occult); }
+.icon-unique { color: var(--accent); }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* affinity filter and picker extras */
+.affinity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+
+.affinity-grid label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* weapon cards, one under the other */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .weapon-card {
   display: grid;
@@ -189,8 +323,15 @@ input[type="checkbox"] {
   border-bottom: 1px solid var(--border);
 }
 
-.weapon-card h2 {
+.card-title {
   flex-basis: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.weapon-card h2 {
   margin: 0;
   font-size: 1.6rem;
 }
@@ -210,8 +351,24 @@ input[type="checkbox"] {
   padding: 0;
 }
 
-/* attack power */
+.weapon-card .remove {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
 
+.weapon-card .remove:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* attack power */
 .attack-panel li {
   display: grid;
   grid-template-columns: 1fr auto;
@@ -220,25 +377,11 @@ input[type="checkbox"] {
   border-bottom: 1px solid var(--border);
 }
 
-.attack-panel li[data-type="physical"] { --dmg: var(--physical); }
-.attack-panel li[data-type="magic"] { --dmg: var(--magic); }
-.attack-panel li[data-type="fire"] { --dmg: var(--fire); }
-.attack-panel li[data-type="lightning"] { --dmg: var(--lightning); }
-.attack-panel li[data-type="holy"] { --dmg: var(--holy); }
-
 .damage-type {
   display: flex;
   align-items: center;
   gap: 8px;
   text-transform: capitalize;
-}
-
-.damage-type::before {
-  content: "";
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--dmg, var(--muted));
 }
 
 .damage-total {
@@ -248,7 +391,7 @@ input[type="checkbox"] {
 
 .damage-split {
   grid-column: 1 / -1;
-  padding-left: 18px;
+  padding-left: 26px;
   color: var(--muted);
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
@@ -268,7 +411,6 @@ input[type="checkbox"] {
 }
 
 /* scaling and requirements */
-
 .scaling-panel li,
 .requirements-panel li {
   display: flex;
@@ -300,25 +442,6 @@ input[type="checkbox"] {
   border-radius: 6px;
   background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
-
-/* ---------- empty state and footer ---------- */
-
-.empty {
-  padding: 32px;
-  text-align: center;
-  color: var(--muted);
-  border: 1px dashed var(--border);
-  border-radius: 6px;
-}
-
-.app-footer {
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
 /* ---------- phones ---------- */
 
 @media (max-width: 760px) {
@@ -329,8 +452,11 @@ input[type="checkbox"] {
   .inputs {
     position: static;
   }
-
-  .weapon-card {
+  .app-footer {
     grid-template-columns: 1fr;
   }
+    .weapon-card {
+    grid-template-columns: 1fr;
+  }
+
 }
