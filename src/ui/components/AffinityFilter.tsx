@@ -12,7 +12,7 @@ export default function AffinityFilter({ selected, onToggle }: Props) {
       <h2>Affinity</h2>
       <div className="affinity-grid">
         {AFFINITIES.map((a) => (
-          <label key={a.key}>
+          <label key={a.key} title={a.label}>
             <input type="checkbox" checked={selected.has(a.key)} onChange={() => onToggle(a.key)} />
             <Icon name={a.icon} />
             <span>{a.label}</span>

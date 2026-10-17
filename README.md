@@ -60,6 +60,9 @@ The app, the tests and the other scripts don't need that clone.
 
 - Weapon data (`regulation-vanilla-v1.17`) and the scaling-curve evaluation come from [elden-ring-weapon-calculator](https://github.com/ThomasJClark/elden-ring-weapon-calculator) by Tom Clark (MIT License, full text in `THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt`).
 - The underlying game data belongs to FromSoftware / Bandai Namco. This is a fan-made, non-commercial project and is not affiliated with or endorsed by either company.
+-The images are assets from ELDEN RING (c) FromSoftware / Bandai Namco, taken from the
+elden-ring-weapon-calculator project. They are NOT covered by this repository's MIT license.
+They are used in a fan-made, non-commercial tool and will be removed on request.
 
 ## License
 

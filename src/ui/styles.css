@@ -68,43 +68,86 @@ h3 {
 /* ---------- page layout ---------- */
 
 .app {
-  max-width: 1000px;
+  max-width: 1180px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 16px 20px 24px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 }
 
 .app-header h1 {
-  margin: 8px 0 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
   font-size: 1.7rem;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 12px;
 }
 
 .layout {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 340px minmax(0, 1fr);
   gap: 24px;
   align-items: start;
 }
 
+/* left column: stays in view while the weapon cards scroll with the page */
 .inputs {
   position: sticky;
-  top: 16px;
+  top: 12px;
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-right: 4px;
 }
 
-.affinity-filter
-.weapon-picker,
-.stats-form{
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 16px;
+.inputs > * {
+  flex-shrink: 0;
 }
 
-.inputs h2 {
+.output {
+  min-width: 0;
+}
+
+/* attributes row above the cards, stays visible while they scroll */
+.stats-form {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  margin-bottom: 16px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 12px;
+}
+
+.stat-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.stat-field input {
+  width: 100%;
+  text-align: center;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+.inputs h2,
+.stats-form h2 {
   margin: 0 0 8px;
   font-family: var(--sans);
   font-size: 0.8rem;
@@ -136,6 +179,7 @@ input[type="checkbox"] {
 }
 
 .weapon-results {
+  overscroll-behavior: contain;
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
@@ -153,6 +197,7 @@ input[type="checkbox"] {
   padding: 8px 10px;
   font: inherit;
   cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
 }
 
 .weapon-results button:hover {
@@ -170,20 +215,6 @@ input[type="checkbox"] {
   padding: 8px 10px;
 }
 
-/* ---------- attributes ---------- */
-
-.stat-field {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.stat-field input {
-  width: 64px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
 
 /* ---------- empty state and footer ---------- */
 
@@ -195,27 +226,12 @@ input[type="checkbox"] {
   border-radius: 6px;
 }
 
-.app-footer {
-  margin-top: 32px;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
 /* header and footer */
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
 
-.app-header h1 {
-  margin: 8px 0;
-  font-size: 1.7rem;
+.subtitle {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .github-link {
@@ -230,38 +246,77 @@ input[type="checkbox"] {
 }
 
 .app-footer {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 32px;
-  padding-top: 24px;
+  margin-top: 48px;
+  padding: 32px 0 24px;
   border-top: 1px solid var(--border);
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.875rem;
+}
+
+.footer-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 32px;
+}
+
+.footer-brand strong {
+  display: block;
+  margin-bottom: 8px;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.footer-brand p {
+  margin: 0;
+  max-width: 36ch;
 }
 
 .app-footer h3 {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-family: var(--sans);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.app-footer p {
-  margin: 0;
+  color: var(--text);
 }
 
 .app-footer ul {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.app-footer .disclaimer {
-  grid-column: 1 / -1;
+.app-footer a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.app-footer a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.footer-legal {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 32px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.footer-legal p {
+  margin: 0;
+}
+
+.footer-legal p:last-child {
+  max-width: 60ch;
+  text-align: right;
 }
 
 /* icons */
@@ -276,6 +331,7 @@ input[type="checkbox"] {
 .icon-blood { color: var(--blood); }
 .icon-occult { color: var(--occult); }
 .icon-unique { color: var(--accent); }
+.icon-img { object-fit: contain; border-radius: 4px; }
 
 .sr-only {
   position: absolute;
@@ -334,6 +390,9 @@ input[type="checkbox"] {
 .weapon-card h2 {
   margin: 0;
   font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .weapon-card h3 {
@@ -391,7 +450,7 @@ input[type="checkbox"] {
 
 .damage-split {
   grid-column: 1 / -1;
-  padding-left: 26px;
+  padding-left: 30px;
   color: var(--muted);
   font-size: 0.85rem;
   font-variant-numeric: tabular-nums;
@@ -445,18 +504,38 @@ input[type="checkbox"] {
 /* ---------- phones ---------- */
 
 @media (max-width: 760px) {
+  .app {
+    padding: 12px;
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }
 
   .inputs {
     position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
   }
-  .app-footer {
-    grid-template-columns: 1fr;
+
+  .stats-form {
+    position: static;
   }
-    .weapon-card {
+
+  .weapon-card {
     grid-template-columns: 1fr;
   }
 
+  .footer-main {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-legal {
+    flex-direction: column;
+  }
+
+  .footer-legal p:last-child {
+    text-align: left;
+  }
 }

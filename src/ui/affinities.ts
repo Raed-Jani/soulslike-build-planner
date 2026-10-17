@@ -25,3 +25,6 @@ const KEY_BY_ID = new Map<number, AffinityKey>(AFFINITIES.map((a) => [a.id, a.ke
 export function affinityKeyOf(id: number): AffinityKey | undefined {
   return KEY_BY_ID.get(id);
 }
+export function affinityInfo(key: AffinityKey | undefined) {
+  return AFFINITIES.find((a) => a.key === key);
+}

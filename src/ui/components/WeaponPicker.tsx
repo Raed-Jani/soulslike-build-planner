@@ -1,6 +1,10 @@
+import { affinityInfo, type AffinityKey } from "../affinities";
+import { Icon } from "../icons";
+
 interface Match {
   index: number;
   name: string;
+  affinity: AffinityKey;
 }
 
 interface Props {
@@ -25,6 +29,7 @@ export default function WeaponPicker({ query, onQueryChange, matches, picked, on
       <ul className="weapon-results">
         {matches.map((m) => {
           const isPicked = picked.includes(m.index);
+          const info = affinityInfo(m.affinity);
           return (
             <li key={m.index}>
               <button
@@ -33,7 +38,8 @@ export default function WeaponPicker({ query, onQueryChange, matches, picked, on
                 aria-pressed={isPicked}
                 onClick={() => onToggle(m.index)}
               >
-                {m.name}
+                {info && <Icon name={info.icon} size={20} label={info.label} />}
+                <span>{m.name}</span>
               </button>
             </li>
           );

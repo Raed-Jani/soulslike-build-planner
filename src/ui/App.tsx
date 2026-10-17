@@ -47,13 +47,15 @@ export default function App() {
   const matches = useMemo(() => {
     if (!data) return [];
     const q = query.trim().toLowerCase();
-    const found: { index: number; name: string }[] = [];
+    const found: { index: number; name: string; affinity: AffinityKey }[] = [];
     for (let i = 0; i < data.weapons.length && found.length < 50; i++) {
       const w = data.weapons[i];
       if (HIDDEN_TYPES.includes(w.weaponType)) continue;
       const key = affinityKeyOf(w.affinityId);
       if (!key || !affinities.has(key)) continue;
-      if (q === "" || w.name.toLowerCase().includes(q)) found.push({ index: i, name: w.name });
+      if (q === "" || w.name.toLowerCase().includes(q)) {
+        found.push({ index: i, name: w.name, affinity: key });
+      }
     }
     return found;
   }, [data, query, affinities]);
@@ -61,7 +63,11 @@ export default function App() {
   // the picked weapons, built once per change of selection
   const built = useMemo(() => {
     if (!data || !build) return [];
-    return picked.map((index) => ({ index, weapon: build(data.weapons[index]) }));
+    return picked.map((index) => ({
+      index,
+      weapon: build(data.weapons[index]),
+      affinity: affinityKeyOf(data.weapons[index].affinityId),
+    }));
   }, [data, build, picked]);
 
   function togglePick(index: number) {
@@ -92,7 +98,10 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Soulslike Build Planner</h1>
+        <div>
+          <h1>Elden Ring Damage Calculator</h1>
+          <p className="subtitle">Attack rating by weapon, upgrade level and attributes</p>
+        </div>
         <a className="github-link" href={REPO} aria-label="Source code on GitHub" title="Source code on GitHub">
           <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" aria-hidden="true">
             <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
@@ -102,7 +111,6 @@ export default function App() {
 
       <main className="layout">
         <aside className="inputs">
-          <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
           <WeaponPicker
             query={query}
             onQueryChange={setQuery}
@@ -110,18 +118,20 @@ export default function App() {
             picked={picked}
             onToggle={togglePick}
           />
-          <StatsForm statText={statText} onChange={changeStat} />
+          <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
         </aside>
 
         <section className="output">
+          <StatsForm statText={statText} onChange={changeStat} />
           {built.length === 0 ? (
             <p className="empty">Pick one or more weapons to see their attack rating.</p>
           ) : (
             <div className="cards">
-              {built.map(({ index, weapon }) => (
+              {built.map(({ index, weapon, affinity }) => (
                 <WeaponCard
                   key={index}
                   weapon={weapon}
+                  affinity={affinity}
                   stats={stats}
                   tiers={data.scalingTiers as ScalingTiers}
                   level={levels[index] ?? 0}
@@ -135,37 +145,47 @@ export default function App() {
           )}
         </section>
       </main>
-
       <footer className="app-footer">
-        <div>
-          <h3>About</h3>
+        <div className="footer-main">
+          <div className="footer-brand">
+            <strong>Elden Ring Damage Calculator</strong>
+            <p>
+              A free, open-source attack rating calculator. Everything runs in your browser and
+              nothing is sent anywhere.
+            </p>
+          </div>
+          <nav aria-label="Project">
+            <h3>Project</h3>
+            <ul>
+              <li><a href={REPO}>Source code</a></li>
+              <li><a href={`${REPO}/issues`}>Report an issue</a></li>
+              <li><a href={`${REPO}/blob/main/LICENSE`}>MIT license</a></li>
+            </ul>
+          </nav>
+          <nav aria-label="Credits">
+            <h3>Credits</h3>
+            <ul>
+              <li>
+                <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
+                  elden-ring-weapon-calculator
+                </a>{" "}
+                by Tom Clark: weapon data and curve code (MIT)
+              </li>
+              <li>Data version: patch 1.17</li>
+            </ul>
+          </nav>
+        </div>
+        <div className="footer-legal">
           <p>
-            A free, open-source attack rating calculator for Elden Ring. Everything is calculated
-            in your browser, nothing is sent anywhere.
+            © 2026 <a href="https://github.com/Raed-Jani">Raed Jani</a>. Released under the MIT
+            license.
+          </p>
+          <p>
+            Fan-made, non-commercial project, not affiliated with or endorsed by FromSoftware or
+            Bandai Namco. ELDEN RING, its weapon data, names and icons belong to FromSoftware /
+            Bandai Namco.
           </p>
         </div>
-        <div>
-          <h3>Credits</h3>
-          <p>
-            Weapon data (patch 1.17) and the scaling-curve code come from{" "}
-            <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
-              elden-ring-weapon-calculator
-            </a>{" "}
-            by Tom Clark (MIT).
-          </p>
-        </div>
-        <div>
-          <h3>Project</h3>
-          <ul>
-            <li><a href={REPO}>Source code</a></li>
-            <li><a href={`${REPO}/issues`}>Report an issue</a></li>
-            <li><a href={`${REPO}/blob/main/LICENSE`}>MIT license</a></li>
-          </ul>
-        </div>
-        <p className="disclaimer">
-          Fan-made, non-commercial project, not affiliated with or endorsed by FromSoftware or
-          Bandai Namco. ELDEN RING and its game data belong to FromSoftware / Bandai Namco.
-        </p>
       </footer>
     </div>
   );

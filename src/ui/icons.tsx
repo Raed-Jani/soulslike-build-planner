@@ -1,9 +1,28 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export type IconName =
   | "physical" | "magic" | "fire" | "lightning" | "holy"
   | "heavy" | "keen" | "quality" | "cold" | "poison" | "blood" | "occult" | "unique";
 
+// Set to false to use the simple drawn icons instead of the game images
+const USE_GAME_ICONS = true;
+
+// files in public/img/game/ (damage types reuse the matching affinity icon)
+const GAME_ICON_FILES: Partial<Record<IconName, string>> = {
+  physical: "standardAffinity.webp",
+  magic: "magicAffinity.webp",
+  fire: "fireAffinity.webp",
+  lightning: "lightningAffinity.webp",
+  holy: "sacredAffinity.webp",
+  heavy: "heavyAffinity.webp",
+  keen: "keenAffinity.webp",
+  quality: "qualityAffinity.webp",
+  cold: "coldAffinity.webp",
+  poison: "poisonAffinity.webp",
+  blood: "bloodAffinity.webp",
+  occult: "occultAffinity.webp",
+  unique: "specialWeapon.webp",
+};
 const PATHS: Record<IconName, ReactNode> = {
   physical: <path d="M20 4 9 15M6 12l6 6M9 15l-4 4" />,
   magic: <path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z" fill="currentColor" />,
@@ -36,7 +55,24 @@ const PATHS: Record<IconName, ReactNode> = {
   unique: <path d="m12 3 2.6 6.2 6.7.5-5.1 4.3 1.6 6.5L12 17l-5.8 3.5 1.6-6.5L2.7 9.7l6.7-.5z" fill="currentColor" />,
 };
 
-export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
+export function Icon({ name, size = 22, label }: { name: IconName; size?: number; label?: string }) {
+  const [failed, setFailed] = useState(false);
+  const file = GAME_ICON_FILES[name];
+
+  if (USE_GAME_ICONS && file && !failed) {
+    return (
+      <img
+        className="icon icon-img"
+        src={`${import.meta.env.BASE_URL}img/game/${file}`}
+        width={size}
+        height={size}
+        alt={label ?? ""}
+        title={label}
+        onError={() => setFailed(true)}
+      />
+    );
+  }
+
   return (
     <svg
       className={`icon icon-${name}`}
@@ -48,8 +84,11 @@ export function Icon({ name, size = 18 }: { name: IconName; size?: number }) {
       strokeWidth="1.8"
       strokeLinecap="round"
       strokeLinejoin="round"
-      aria-hidden="true"
+      role={label ? "img" : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
     >
+      {label && <title>{label}</title>}
       {PATHS[name]}
     </svg>
   );
