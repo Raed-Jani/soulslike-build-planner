@@ -3,6 +3,7 @@ import type { IconName } from "./icons";
 // affinityId numbers come from the game data; affinities.test.ts checks them against it
 export const AFFINITIES = [
   { key: "standard", label: "Standard", id: 0, icon: "physical" },
+  { key: "unique", label: "Unique", id: -1, icon: "unique" },
   { key: "heavy", label: "Heavy", id: 1, icon: "heavy" },
   { key: "keen", label: "Keen", id: 2, icon: "keen" },
   { key: "quality", label: "Quality", id: 3, icon: "quality" },
@@ -15,7 +16,6 @@ export const AFFINITIES = [
   { key: "poison", label: "Poison", id: 10, icon: "poison" },
   { key: "blood", label: "Blood", id: 11, icon: "blood" },
   { key: "occult", label: "Occult", id: 12, icon: "occult" },
-  { key: "unique", label: "Unique", id: -1, icon: "unique" },
 ] as const satisfies readonly { key: string; label: string; id: number; icon: IconName }[];
 
 export type AffinityKey = (typeof AFFINITIES)[number]["key"];

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { affinityInfo, type AffinityKey } from "../affinities";
 import { Icon } from "../icons";
 
@@ -17,11 +18,15 @@ interface Props {
   query: string;
   onQueryChange: (query: string) => void;
   matches: Match[];
+  total: number;
   chosen: Chosen[];
   onToggle: (index: number) => void;
+  children?: ReactNode;
 }
 
-export default function WeaponPicker({ query, onQueryChange, matches, chosen, onToggle }: Props) {
+export default function WeaponPicker({
+  query, onQueryChange, matches, total, chosen, onToggle, children,
+}: Props) {
   const pickedSet = new Set(chosen.map((c) => c.index));
 
   return (
@@ -55,6 +60,9 @@ export default function WeaponPicker({ query, onQueryChange, matches, chosen, on
         value={query}
         onChange={(e) => onQueryChange(e.target.value)}
       />
+
+      {children}
+
       <ul className="weapon-results">
         {matches.map((m) => {
           const isPicked = pickedSet.has(m.index);
@@ -76,6 +84,9 @@ export default function WeaponPicker({ query, onQueryChange, matches, chosen, on
         })}
         {matches.length === 0 && <li className="no-match">No weapons match.</li>}
       </ul>
+      {total > matches.length && (
+        <p className="hint">Showing {matches.length} of {total}. Refine the search or the filters.</p>
+      )}
     </section>
   );
 }

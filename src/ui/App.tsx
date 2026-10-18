@@ -9,11 +9,11 @@ import AffinityFilter from "./components/AffinityFilter";
 import StatsForm from "./components/StatsForm";
 import WeaponCard from "./components/WeaponCard";
 import WeaponPicker from "./components/WeaponPicker";
+import WeaponTypeFilter from "./components/WeaponTypeFilter";
 
 // staves (57), seals (61) and torches (87): their value is spell scaling, which v1 doesn't model
 const HIDDEN_TYPES = [57, 61, 87];
 const REPO = "https://github.com/Raed-Jani/soulslike-build-planner";
-
 export default function App() {
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +22,7 @@ export default function App() {
   const [picked, setPicked] = useState<number[]>([]); // indexes into data.weapons
   const [levels, setLevels] = useState<Record<number, number>>({});
   const [twoHandings, setTwoHandings] = useState<Record<number, boolean>>({});
+  const [types, setTypes] = useState<Set<number>>(new Set()); // empty = every type
   const [statText, setStatText] = useState<StatText>({
     str: "18", dex: "18", int: "10", fai: "10", arc: "10",
   });
@@ -43,22 +44,37 @@ export default function App() {
 
   const build = useMemo(() => (data ? makeBuilder(data) : null), [data]);
 
-  // first 50 weapons matching the search text and the ticked affinities
-  const matches = useMemo(() => {
-    if (!data) return [];
-    const q = query.trim().toLowerCase();
-    const found: { index: number; name: string; affinity: AffinityKey }[] = [];
-    for (let i = 0; i < data.weapons.length && found.length < 50; i++) {
-      const w = data.weapons[i];
-      if (HIDDEN_TYPES.includes(w.weaponType)) continue;
-      const key = affinityKeyOf(w.affinityId);
-      if (!key || !affinities.has(key)) continue;
-      if (q === "" || w.name.toLowerCase().includes(q)) {
-        found.push({ index: i, name: w.name, affinity: key });
-      }
-    }
-    return found;
-  }, [data, query, affinities]);
+  // the first 50 weapons matching the search text, the type filter and the ticked affinities
+const matches = useMemo(() => {
+  const list: { index: number; name: string; affinity: AffinityKey }[] = [];
+  let total = 0;
+  if (!data) return { list, total };
+  const q = query.trim().toLowerCase();
+  for (let i = 0; i < data.weapons.length; i++) {
+    const w = data.weapons[i];
+    if (HIDDEN_TYPES.includes(w.weaponType)) continue;
+    if (types.size > 0 && !types.has(w.weaponType)) continue;
+    const key = affinityKeyOf(w.affinityId);
+    if (!key || !affinities.has(key)) continue;
+    if (q !== "" && !w.name.toLowerCase().includes(q)) continue;
+    total++;
+    if (list.length < 50) list.push({ index: i, name: w.name, affinity: key });
+  }
+  return { list, total };
+}, [data, query, affinities, types]);
+
+// how many weapons each type has with the current affinity filter
+const typeCounts = useMemo(() => {
+  const counts: Record<number, number> = {};
+  if (!data) return counts;
+  for (const w of data.weapons) {
+    if (HIDDEN_TYPES.includes(w.weaponType)) continue;
+    const key = affinityKeyOf(w.affinityId);
+    if (!key || !affinities.has(key)) continue;
+    counts[w.weaponType] = (counts[w.weaponType] ?? 0) + 1;
+  }
+  return counts;
+}, [data, affinities]);
 
   // the picked weapons, built once per change of selection
   const built = useMemo(() => {
@@ -88,6 +104,23 @@ export default function App() {
     setAffinities(next);
   }
 
+  function toggleType(id: number) {
+  const next = new Set(types);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  setTypes(next);
+}
+
+function toggleGroup(ids: number[]) {
+  const next = new Set(types);
+  const allChosen = ids.every((id) => next.has(id));
+  for (const id of ids) {
+    if (allChosen) next.delete(id);
+    else next.add(id);
+  }
+  setTypes(next);
+}
+
   function changeStat(stat: StatField, text: string) {
     setStatText({ ...statText, [stat]: text });
   }
@@ -114,10 +147,19 @@ export default function App() {
           <WeaponPicker
             query={query}
             onQueryChange={setQuery}
-            matches={matches}
+            matches={matches.list}
+            total={matches.total}
             chosen={built.map(({ index, weapon, affinity }) => ({ index, name: weapon.name, affinity }))}
             onToggle={togglePick}
-          />
+          >
+            <WeaponTypeFilter
+              selected={types}
+              counts={typeCounts}
+              onToggleType={toggleType}
+              onToggleGroup={toggleGroup}
+              onClear={() => setTypes(new Set())}
+            />
+          </WeaponPicker>
           <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
         </aside>
 
@@ -146,41 +188,47 @@ export default function App() {
         </section>
       </main>
       <footer className="app-footer">
-        <div className="footer-main">
-          <div className="footer-brand">
-            <strong>Elden Ring Damage Calculator</strong>
-            <p>
-              A free, open-source attack rating calculator. Everything runs in your browser and
-              nothing is sent anywhere.
-            </p>
-          </div>
-          <nav aria-label="Project">
-            <h3>Project</h3>
-            <ul>
-              <li><a href={REPO}>Source code</a></li>
-              <li><a href={`${REPO}/issues`}>Report an issue</a></li>
-              <li><a href={`${REPO}/blob/main/LICENSE`}>MIT license</a></li>
-            </ul>
-          </nav>
-          <nav aria-label="Credits">
-            <h3>Credits</h3>
-            <ul>
-              <li>
-                Fan-made, non-commercial project, not affiliated with or endorsed by FromSoftware or
-            Bandai Namco. ELDEN RING, its weapon data, names and icons belong to FromSoftware /
-            Bandai Namco.
-              </li>
-              <li>Data version: patch 1.17</li>
-            </ul>
-          </nav>
-        </div>
-        <div className="footer-legal">
+      <div className="footer-grid">
+        <div className="footer-brand">
+          <strong>Elden Ring Damage Calculator</strong>
           <p>
-            © 2026 <a href="https://github.com/Raed-Jani">Raed Jani</a>. Released under the MIT
-            license.
+            A free, open-source attack rating calculator. It runs entirely in your browser, and
+            nothing is sent anywhere.
           </p>
+          <p className="footer-stack">Built with TypeScript, React and Vite.</p>
         </div>
-      </footer>
+        <nav aria-label="Project">
+          <h3>Project</h3>
+          <ul>
+            <li><a href={REPO}>Source code</a></li>
+            <li><a href={`${REPO}/issues`}>Report an issue</a></li>
+            <li><a href={`${REPO}/blob/main/LICENSE`}>MIT license</a></li>
+          </ul>
+        </nav>
+        <nav aria-label="Credits">
+          <h3>Credits and data</h3>
+          <ul>
+            <li>
+              Weapon data:{" "}
+              <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
+                elden-ring-weapon-calculator
+              </a>{" "}
+              by Tom Clark (MIT)
+            </li>
+            <li>Data version: patch 1.17</li>
+          </ul>
+        </nav>
+      </div>
+      <div className="footer-legal">
+        <p>
+          © 2026 <a href="https://github.com/Raed-Jani">Raed Jani</a>
+        </p>
+        <p>
+          Fan-made, non-commercial project. Not affiliated with or endorsed by FromSoftware or Bandai
+          Namco. ELDEN RING, its game data, names and icons belong to FromSoftware / Bandai Namco.
+        </p>
+      </div>
+    </footer>
     </div>
   );
 }
