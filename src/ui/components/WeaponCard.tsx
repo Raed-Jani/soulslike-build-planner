@@ -12,6 +12,7 @@ import AttackPanel from "./AttackPanel";
 import RequirementsPanel from "./RequirementsPanel";
 import ScalingPanel from "./ScalingPanel";
 import StatusPanel from "./StatusPanel";
+import SpellPanel from "./SpellPanel";
 
 interface Props {
   weapon: Weapon;
@@ -79,6 +80,7 @@ export default function WeaponCard({
       <ScalingPanel weapon={weapon} level={safeLevel} tiers={tiers} />
       <RequirementsPanel weapon={weapon} effective={effective} unmet={detail.unmet} />
       <StatusPanel status={detail.status} />
+      <SpellPanel weapon={weapon} spell={detail.spell} />
     </article>
   );
 }

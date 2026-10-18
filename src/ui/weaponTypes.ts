@@ -10,7 +10,6 @@ export interface WeaponTypeGroup {
 }
 
 // weaponType numbers come from the game data (weaponTypes.test.ts checks them against it).
-// Staves (57), seals (61) and torches (87) are left out on purpose: they need spell scaling.
 export const WEAPON_TYPE_GROUPS: WeaponTypeGroup[] = [
   {
     key: "melee",
@@ -68,9 +67,20 @@ export const WEAPON_TYPE_GROUPS: WeaponTypeGroup[] = [
       { id: 90, label: "Thrusting Shield" },
     ],
   },
+    {
+    key: "casting",
+    label: "Staves and seals",
+    types: [
+      { id: 57, label: "Glintstone Staff" },
+      { id: 61, label: "Sacred Seal" },
+    ],
+  },
   {
     key: "other",
     label: "Other",
-    types: [{ id: 89, label: "Perfume Bottle" }],
+    types: [
+      { id: 87, label: "Torch" },
+      { id: 89, label: "Perfume Bottle" },
+    ],
   },
 ];

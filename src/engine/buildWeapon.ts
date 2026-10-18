@@ -125,6 +125,8 @@ export function makeBuilder(data: any) {
       name: w.name,
       weaponType: w.weaponType,
       paired: w.paired ?? false,
+      sorceryTool: w.sorceryTool ?? false,
+      incantationTool: w.incantationTool ?? false,
       requirements: w.requirements,
       attack,
       attributeScaling,

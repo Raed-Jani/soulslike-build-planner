@@ -6,7 +6,7 @@ import { WEAPON_TYPE_GROUPS } from "./weaponTypes";
 const data = JSON.parse(
   readFileSync(resolve("public", "data", "regulation-vanilla-v1.17.json"), "utf8")
 );
-const HIDDEN = [57, 61, 87]; // staves, seals, torches
+const HIDDEN: number[] = [];
 
 describe("weapon type table", () => {
   it("covers every weaponType in the data except the hidden ones", () => {
@@ -32,6 +32,7 @@ describe("weapon type table", () => {
       [88, "Dryleaf Arts"], [89, "Firespark Perfume Bottle"], [90, "Dueling Shield"],
       [91, "Smithscript Dagger"], [92, "Backhand Blade"], [93, "Milady"],
       [94, "Great Katana"], [95, "Beast Claw"],
+      [57, "Glintstone Staff"], [61, "Finger Seal"], [87, "Torch"],
     ];
     for (const [id, name] of expected) {
       const weapon = data.weapons.find((w: any) => w.name === name);

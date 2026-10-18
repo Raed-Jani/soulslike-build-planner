@@ -28,6 +28,9 @@ export interface Weapon {
     status?: Partial<Record<StatusType, number>>[];
       // curves for the statuses that scale with Arcane
     statusCurves?: Partial<Record<StatusType, Curve>>;
+      // true for staves (sorceries) and seals (incantations)
+    sorceryTool?: boolean;
+    incantationTool?: boolean;
 } 
 
 //test

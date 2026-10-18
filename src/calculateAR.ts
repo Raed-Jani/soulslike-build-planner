@@ -29,9 +29,15 @@ export interface StatusDetail {
   penalized: boolean; // true when the Arcane requirement is not met
 }
 
+export interface SpellDetail {
+  scaling: number; // 100 = no bonus, like the number the game shows
+  penalized: boolean; // true when a requirement penalty applies
+}
+
 export interface ARDetail {
   damage: Partial<Record<DamageType, DamageDetail>>;
   status: Partial<Record<StatusType, StatusDetail>>;
+  spell: Partial<Record<DamageType, SpellDetail>>;
   unmet: Attribute[]; // stats below the weapon's requirement (after two-handing)
 }
 
@@ -62,11 +68,14 @@ export function calculateARDetail(
     (stat) => stats[stat] < (weapon.requirements[stat] ?? 0)
   );
 
-  const damage: ARDetail["damage"] = {};
+    const damage: ARDetail["damage"] = {};
+  const spell: ARDetail["spell"] = {};
+  const isTool = Boolean(weapon.sorceryTool || weapon.incantationTool);
 
   for (const type of allDamageTypes) {
     const base = weapon.attack[upgradeLevel][type] ?? 0;
-    if (base === 0) continue;
+    // spell tools need the scaling even for damage types where they have no base damage
+    if (base === 0 && !isTool) continue;
 
     const correct = weapon.attackElementCorrect[type] ?? {};
     const scalingStats = allAttributes.filter((stat) => correct[stat]);
@@ -92,8 +101,14 @@ export function calculateARDetail(
       }
     }
 
-    const total = base * multiplier;
-    damage[type] = { base, bonus: total - base, total, penalized };
+    if (base > 0) {
+      const total = base * multiplier;
+      damage[type] = { base, bonus: total - base, total, penalized };
+    }
+    // only report spell scaling for damage types that some attribute scales
+    if (isTool && scalingStats.length > 0) {
+      spell[type] = { scaling: 100 * multiplier, penalized };
+    }
   }
 
   // status buildup: only some effects scale with Arcane
@@ -118,7 +133,7 @@ export function calculateARDetail(
     status[type] = { base, total: base * multiplier, penalized };
   }
 
-  return { damage, status, unmet };
+  return { damage, status, spell, unmet };
 }
 
 export function calculateAR(

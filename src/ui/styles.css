@@ -73,20 +73,6 @@ h3 {
   padding: 16px 20px 24px;
 }
 
-.app-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.app-header h1 {
-  margin: 0;
-  padding: 0;
-  border: 0;
-  font-size: 1.7rem;
-}
-
 .layout {
   display: grid;
   grid-template-columns: 340px minmax(0, 1fr);
@@ -285,21 +271,62 @@ input[type="checkbox"] {
 
 /* header and footer */
 
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.app-header h1 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 1.7rem;
+  line-height: 1.2;
+}
+
+.version-badge {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
 .subtitle {
-  margin: 2px 0 0;
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.9rem;
 }
 
 .github-link {
   display: inline-flex;
-  padding: 6px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
   border-radius: 6px;
   color: var(--muted);
+  font-size: 0.875rem;
+  text-decoration: none;
 }
 
 .github-link:hover {
   color: var(--accent);
+  border-color: var(--accent);
 }
 
 /* icons */
@@ -685,6 +712,12 @@ input[type="checkbox"] {
   font-size: 0.8rem;
 }
 
+.spell-note {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
 /* ---------- phones ---------- */
 
 @media (max-width: 760px) {
@@ -711,7 +744,7 @@ input[type="checkbox"] {
     grid-template-columns: 1fr;
   }
 
-    .footer-grid {
+  .footer-grid {
     grid-template-columns: 1fr;
     gap: 24px;
   }
@@ -722,5 +755,13 @@ input[type="checkbox"] {
 
   .footer-legal p:last-child {
     text-align: left;
+  }
+
+    .github-link span {
+    display: none;
+  }
+
+  .github-link {
+    padding: 8px;
   }
 }

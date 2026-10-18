@@ -190,3 +190,33 @@ describe("status buildup", () => {
     expect(detail.status.bleed!.penalized).toBe(true);
   });
 });
+describe("spell scaling", () => {
+  // incantation tool: scales holy damage with Faith, but has no holy base damage
+  const seal = {
+    ...testSword,
+    incantationTool: true,
+    attackElementCorrect: { holy: { fai: true as const } },
+    attributeScaling: [
+      testSword.attributeScaling[0],
+      { ...testSword.attributeScaling[1], fai: 0.4 },
+    ],
+  };
+
+  it("reports spell scaling even without base damage of that type", () => {
+    const detail = calculateARDetail(seal, testCharacter, 1);
+    // Faith 10: fakeCurve(10) = 0.125, so 100 * (1 + 0.125 * 0.4) = 105
+    expect(detail.spell.holy!.scaling).toBeCloseTo(105, 3);
+    expect(detail.damage.holy).toBeUndefined();
+  });
+
+  it("a missing requirement penalizes it", () => {
+    const demanding = { ...seal, requirements: { ...seal.requirements, fai: 20 } };
+    const detail = calculateARDetail(demanding, testCharacter, 1);
+    expect(detail.spell.holy!.scaling).toBeCloseTo(60, 3);
+    expect(detail.spell.holy!.penalized).toBe(true);
+  });
+
+  it("weapons that are not spell tools report none", () => {
+    expect(calculateARDetail(testSword, testCharacter, 1).spell).toEqual({});
+  });
+});
