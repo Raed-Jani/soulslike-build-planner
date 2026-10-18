@@ -41,7 +41,6 @@ body {
 
 .affinity-filter,
 .weapon-picker,
-.stats-form,
 .weapon-card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -104,36 +103,8 @@ h3 {
 }
 
 /* attributes row above the cards, stays visible while they scroll */
-.stats-form {
-  position: sticky;
-  top: 12px;
-  z-index: 5;
-  margin-bottom: 16px;
-}
 
-.stat-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 12px;
-}
-
-.stat-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.stat-field input {
-  width: 100%;
-  text-align: center;
-  color: var(--text);
-  font-size: 1.05rem;
-  font-variant-numeric: tabular-nums;
-}
-.inputs h2,
-.stats-form h2 {
+.inputs h2{
   margin: 0 0 8px;
   font-family: var(--sans);
   font-size: 0.8rem;
@@ -781,6 +752,63 @@ input[type="checkbox"] {
   color: var(--muted);
   font-size: 0.85rem;
 }
+
+/* attributes bar: compact, and stays at the top while the cards scroll under it */
+.stats-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-bottom: 8px;
+  padding: 12px 0 8px;
+  background: var(--bg);
+}
+
+.stats-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px 24px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 6px 12px -8px rgba(0, 0, 0, 0.7);
+}
+
+.stats-inner h2 {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-left: auto;
+}
+
+.stat-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.stat-field input {
+  width: 56px;
+  padding: 4px 6px;
+  text-align: center;
+  color: var(--text);
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- phones ---------- */
 
 @media (max-width: 760px) {
@@ -799,8 +827,18 @@ input[type="checkbox"] {
     padding-right: 0;
   }
 
-  .stats-form {
+    .stats-bar {
     position: static;
+    padding-top: 0;
+  }
+
+  .stats-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stat-row {
+    margin-left: 0;
   }
 
   .weapon-card {
