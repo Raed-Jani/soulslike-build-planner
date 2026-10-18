@@ -539,6 +539,47 @@ input[type="checkbox"] {
   font-variant-numeric: tabular-nums;
 }
 
+/* spell scaling: one column per element, icon and name on top, value below */
+.weapon-card {
+  container-type: inline-size;
+}
+
+.status-panel.spell-panel ul {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px 16px;
+}
+
+.status-panel.spell-panel li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+.status-panel.spell-panel li > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.status-panel.spell-panel li > strong {
+  grid-column: 1 / -1;
+  font-size: 1.3rem;
+}
+
+/* narrower cards: 3 columns, then 2 */
+@container (max-width: 600px) {
+  .status-panel.spell-panel ul {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 380px) {
+  .status-panel.spell-panel ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 /* footer */
 .app-footer {
   margin-top: 48px;
@@ -712,12 +753,34 @@ input[type="checkbox"] {
   font-size: 0.8rem;
 }
 
+/* spell scaling of staves and seals */
 .spell-note {
   margin: 0 0 10px;
   color: var(--muted);
   font-size: 0.85rem;
 }
 
+.spell-all {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0;
+}
+
+.spell-all strong {
+  font-size: 1.3rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.spell-all[data-unmet] {
+  color: var(--danger);
+}
+
+.spell-legend {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 /* ---------- phones ---------- */
 
 @media (max-width: 760px) {
