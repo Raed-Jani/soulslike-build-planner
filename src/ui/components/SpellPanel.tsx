@@ -24,13 +24,6 @@ export default function SpellPanel({ weapon, spell }: Props) {
       : weapon.sorceryTool
         ? "Sorcery scaling"
         : "Incantation scaling";
-
-  // staves with one shared value get the compact "All elements" line;
-  // seals, and any weapon whose elements differ, show one entry per element
-  const allSame = rows.every(
-    (r) => r.value === rows[0].value && r.penalized === rows[0].penalized
-  );
-  const compact = allSame && Boolean(weapon.sorceryTool) && !weapon.incantationTool;
   const penaltyNote = "Requirement not met: scaling reduced";
 
   return (
@@ -41,34 +34,21 @@ export default function SpellPanel({ weapon, spell }: Props) {
         spell uses the value of its own element.
       </p>
 
-      {compact ? (
-        <p
-          className="spell-all"
-          data-unmet={rows[0].penalized || undefined}
-          title={rows[0].penalized ? penaltyNote : undefined}
-        >
-          <span>All elements</span>
-          <strong>
-            {rows[0].value}%{rows[0].penalized ? "*" : ""}
-          </strong>
-        </p>
-      ) : (
-        <ul>
-          {rows.map((r) => (
-            <li
-              key={r.type}
-              data-unmet={r.penalized || undefined}
-              title={r.penalized ? penaltyNote : undefined}
-            >
-              <Icon name={r.type} label={cap(r.type)} />
-              <span>{cap(r.type)}</span>
-              <strong>
-                {r.value}%{r.penalized ? "*" : ""}
-              </strong>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul>
+        {rows.map((r) => (
+          <li
+            key={r.type}
+            data-unmet={r.penalized || undefined}
+            title={r.penalized ? penaltyNote : undefined}
+          >
+            <Icon name={r.type} label={cap(r.type)} />
+            <span>{cap(r.type)}</span>
+            <strong>
+              {r.value}%{r.penalized ? "*" : ""}
+            </strong>
+          </li>
+        ))}
+      </ul>
 
       {rows.some((r) => r.penalized) && <p className="spell-legend">* {penaltyNote}.</p>}
     </section>

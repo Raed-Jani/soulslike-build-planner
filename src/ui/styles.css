@@ -731,22 +731,6 @@ input[type="checkbox"] {
   font-size: 0.85rem;
 }
 
-.spell-all {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin: 0;
-}
-
-.spell-all strong {
-  font-size: 1.3rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.spell-all[data-unmet] {
-  color: var(--danger);
-}
-
 .spell-legend {
   margin: 8px 0 0;
   color: var(--muted);
