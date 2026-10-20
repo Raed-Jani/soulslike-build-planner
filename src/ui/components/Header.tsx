@@ -16,7 +16,10 @@ export default function Header({ repo, dataVersion }: Props) {
             Patch {dataVersion}
           </span>
         </div>
-        <p className="subtitle">Attack rating by weapon, upgrade level and attributes</p>
+        <p className="subtitle">Attack rating by weapon, upgrade level, affinity, and attributes</p>
+        <p className="scope-note">
+          Does not include spell scaling, status buildup, buffs, enemy defense or talismans.
+        </p>
       </div>
 
       <a className="github-link" href={repo} aria-label="Source code on GitHub">

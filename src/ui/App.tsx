@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ScalingTiers } from "../calculateAR";
 import type { Attributes } from "../attributes";
+import type { RegulationData } from "../regulationData";
 import { makeBuilder } from "../engine/buildWeapon";
 import { affinityKeyOf, type AffinityKey } from "./affinities";
 import { loadRegulation } from "./loadRegulation";
 import { parseStat, type StatField, type StatText } from "./stats";
 import AffinityFilter from "./components/AffinityFilter";
+import LoadingError from "./components/LoadingError";
 import StatsForm from "./components/StatsForm";
 import WeaponCard from "./components/WeaponCard";
 import WeaponPicker from "./components/WeaponPicker";
@@ -16,8 +18,9 @@ const REPO = "https://github.com/Raed-Jani/soulslike-build-planner";
 const DATA_VERSION = "1.17";
 
 export default function App() {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<RegulationData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const [query, setQuery] = useState("");
   const [affinities, setAffinities] = useState<Set<AffinityKey>>(new Set(["standard", "unique"]));
   const [picked, setPicked] = useState<number[]>([]); // indexes into data.weapons
@@ -38,16 +41,18 @@ export default function App() {
   };
 
   useEffect(() => {
+    setError(null);
+    setData(null);
     loadRegulation()
       .then(setData)
       .catch((e) => setError(String(e.message ?? e)));
-  }, []);
+  }, [retryKey]);
 
   const build = useMemo(() => (data ? makeBuilder(data) : null), [data]);
 
   // the first 50 weapons matching the search text, the type filter and the ticked affinities
 const matches = useMemo(() => {
-  const list: { index: number; name: string; affinity: AffinityKey }[] = [];
+  const list: { index: number; name: string; affinity: AffinityKey; dlc: boolean }[] = [];
   let total = 0;
   if (!data) return { list, total };
   const q = query.trim().toLowerCase();
@@ -58,7 +63,7 @@ const matches = useMemo(() => {
     if (!key || !affinities.has(key)) continue;
     if (q !== "" && !w.name.toLowerCase().includes(q)) continue;
     total++;
-    if (list.length < 50) list.push({ index: i, name: w.name, affinity: key });
+    if (list.length < 50) list.push({ index: i, name: w.name, affinity: key, dlc: w.dlc ?? false });
   }
   return { list, total };
 }, [data, query, affinities, types]);
@@ -90,6 +95,7 @@ const typeCounts = useMemo(() => {
       setPicked(picked.filter((i) => i !== index));
       return;
     }
+    if (!data) return;
     // new weapons start at their maximum level, like the reference calculator
     const maxLevel = data.reinforceTypes[data.weapons[index].reinforceTypeId].length - 1;
     setPicked([...picked, index]);
@@ -124,8 +130,15 @@ function toggleGroup(ids: number[]) {
     setStatText({ ...statText, [stat]: text });
   }
 
-  if (error) return <p>Something went wrong: {error}</p>;
-  if (!data) return <p>Loading weapon data...</p>;
+  if (error)
+    return (
+      <LoadingError
+        message={error}
+        onRetry={() => setRetryKey((k) => k + 1)}
+      />
+    );
+  if (!data)
+    return <p className="loading-screen">Loading weapon data…</p>;
 
   return (
     <div className="app">
@@ -137,7 +150,7 @@ function toggleGroup(ids: number[]) {
             onQueryChange={setQuery}
             matches={matches.list}
             total={matches.total}
-            chosen={built.map(({ index, weapon, affinity }) => ({ index, name: weapon.name, affinity }))}
+            chosen={built.map(({ index, weapon, affinity }) => ({ index, name: weapon.name, affinity, dlc: weapon.dlc }))}
             onToggle={togglePick}
           >
             <WeaponTypeFilter

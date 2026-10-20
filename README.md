@@ -12,13 +12,16 @@ A free, open-source attack rating calculator for Elden Ring: pick any weapon, se
 
 ## What it does
 
-- Attack rating per damage type (physical, magic, fire, lightning, holy) and total
-- Upgrade levels, with the correct maximum for each weapon (+25 or +10)
-- Two-handing bonus, including the special cases (paired weapons get no bonus, bows and ballistae are always two-handed)
-- Stat requirement penalty, with a warning when a requirement isn't met
-- Search over all weapons, each affinity variant included
+- **Attack rating per damage type** (physical, magic, fire, lightning, holy) with individual base + scaling bonus breakdown and total AR
+- **Upgrade levels**, with the correct maximum for each weapon (+25 regular or +10 somber)
+- **Two-handing mechanics**, including special cases (paired weapons get no bonus, bows and ballistae are always two-handed)
+- **Stat requirement penalties**, with visual warnings and accurate AR reduction when requirements are not met
+- **Status buildup**, displaying passive and Arcane-scaled auxiliary effects (Bleed, Poison, Frostbite, Scarlet Rot, Sleep, Madness, Death Blight)
+- **Spell scaling**, computing exact spell buff values for Glintstone Staves (sorceries) and Sacred Seals (incantations)
+- **Shadow of the Erdtree (DLC) content**, tagged with distinct DLC badges
+- **Search & category filtering**, by weapon name, weapon type, and affinity variants (Standard, Heavy, Keen, Quality, Magic, Fire, Flame Art, Lightning, Sacred, Poison, Blood, Cold, Occult)
 
-**Not covered yet:** spell scaling (staves, seals and torches are hidden), status buildup, buffs, enemy defense, armor and talismans.
+**Out of scope:** enemy defense calculations, temporary buffs, talismans, and armor sets.
 
 ## Run it locally
 

@@ -6,12 +6,14 @@ interface Match {
   index: number;
   name: string;
   affinity: AffinityKey;
+  dlc?: boolean;
 }
 
 interface Chosen {
   index: number;
   name: string;
   affinity?: AffinityKey;
+  dlc?: boolean;
 }
 
 interface Props {
@@ -42,7 +44,8 @@ export default function WeaponPicker({
               return (
                 <li key={c.index}>
                   {info && <Icon name={info.icon} size={18} label={info.label} />}
-                  <span>{c.name}</span>
+                  <span className="chosen-name">{c.name}</span>
+                  {c.dlc && <span className="dlc-badge">DLC</span>}
                   <button type="button" aria-label={`Remove ${c.name}`} onClick={() => onToggle(c.index)}>
                     ×
                   </button>
@@ -77,6 +80,7 @@ export default function WeaponPicker({
               >
                 {info && <Icon name={info.icon} size={20} label={info.label} />}
                 <span>{m.name}</span>
+                {m.dlc && <span className="dlc-badge">DLC</span>}
                 {isPicked && <span className="check" aria-hidden="true">✓</span>}
               </button>
             </li>

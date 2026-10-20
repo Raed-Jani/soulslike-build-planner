@@ -1,7 +1,5 @@
-import { fakeCurve } from "./curves";
 import { describe, it, expect } from "vitest";
-import { testSword } from "./weapon";
-import { testCharacter } from "./attributes";
+import { testSword, testCharacter, fakeCurve } from "./testFixtures";
 import { calculateAR, totalAR } from "./calculateAR";
 import { weapons } from "./data/weapons";
 import type { Attributes } from "./attributes";

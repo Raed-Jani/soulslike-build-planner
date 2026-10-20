@@ -11,8 +11,4 @@ export interface Attributes {
     int: number;
     fai: number;
     arc: number;
-}
-//test
-export const testCharacter: Attributes = {
-  vig: 40, mnd: 15, end: 25, str: 20, dex: 20, int: 10, fai: 10, arc: 10,
-};
+}

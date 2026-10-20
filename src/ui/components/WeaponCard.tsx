@@ -45,6 +45,7 @@ export default function WeaponCard({
           <h2>
             {info && <Icon name={info.icon} size={28} label={info.label} />}
             {weapon.name}
+            {weapon.dlc && <span className="dlc-badge">DLC</span>}
           </h2>
           <button
             type="button"

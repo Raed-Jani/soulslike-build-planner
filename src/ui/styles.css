@@ -171,6 +171,27 @@ input[type="checkbox"] {
   margin-left: auto;
 }
 
+.dlc-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: fit-content;
+  max-width: fit-content;
+  padding: 1px 5px;
+  font-family: var(--sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
 .chosen {
   margin-bottom: 12px;
 }
@@ -204,8 +225,13 @@ input[type="checkbox"] {
   color: var(--accent);
 }
 
-.chosen li span {
+.chosen li .chosen-name {
   flex: 1;
+  min-width: 0;
+}
+
+.chosen li .dlc-badge {
+  flex: 0 0 auto;
 }
 
 .chosen li button {
@@ -281,6 +307,14 @@ input[type="checkbox"] {
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.scope-note {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  opacity: 0.75;
+  font-style: italic;
 }
 
 .github-link {
@@ -849,4 +883,58 @@ input[type="checkbox"] {
   .github-link {
     padding: 8px;
   }
+}
+
+/* ── Loading-error state ── */
+.load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 60vh;
+  padding: 32px;
+  text-align: center;
+}
+
+.load-error__msg {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--danger);
+  margin: 0;
+}
+
+.load-error__detail {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 40ch;
+}
+
+.load-error__retry {
+  margin-top: 8px;
+  padding: 10px 24px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.load-error__retry:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* ── Full-page loading spinner ── */
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--muted);
+  font-size: 1rem;
 }

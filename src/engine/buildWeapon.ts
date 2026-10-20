@@ -4,6 +4,7 @@
 // See THIRD_PARTY_LICENSE-elden-ring-weapon-calculator.txt
 import type { Attribute } from "../attributes";
 import type { Curve } from "../curves";
+import type { RegulationData, RawWeapon } from "../regulationData";
 import {
   allStatusTypes,
   ARC_SCALED_STATUS,
@@ -51,14 +52,14 @@ function buildCurve(stages: { maxVal: number; maxGrowVal: number; adjPt: number 
 
 // Returns a function that turns one raw weapon record into a finished weapon.
 // Curves are cached, because most weapons share the same few curves.
-export function makeBuilder(data: any) {
+export function makeBuilder(data: RegulationData) {
   const curveCache = new Map<number, Curve>();
   const getCurve = (id: number): Curve => {
     if (!curveCache.has(id)) curveCache.set(id, buildCurve(data.calcCorrectGraphs[id]));
     return curveCache.get(id)!;
   };
 
-  return function buildWeapon(w: any): Weapon {
+  return function buildWeapon(w: RawWeapon): Weapon {
     const reinforce: any[] = data.reinforceTypes[w.reinforceTypeId];
     const correct = data.attackElementCorrects[w.attackElementCorrectId];
 
@@ -127,6 +128,7 @@ export function makeBuilder(data: any) {
       paired: w.paired ?? false,
       sorceryTool: w.sorceryTool ?? false,
       incantationTool: w.incantationTool ?? false,
+      dlc: w.dlc ?? false,
       requirements: w.requirements,
       attack,
       attributeScaling,

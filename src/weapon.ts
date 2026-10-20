@@ -1,5 +1,4 @@
 import type { Curve } from "./curves";
-import {fakeCurve} from "./curves";
 import type { Attribute } from "./attributes";
 export const allDamageTypes = ["physical", "magic", "fire", "lightning", "holy"] as const;
 export type DamageType = (typeof allDamageTypes)[number];
@@ -31,28 +30,6 @@ export interface Weapon {
       // true for staves (sorceries) and seals (incantations)
     sorceryTool?: boolean;
     incantationTool?: boolean;
-} 
-
-//test
-export const testSword: Weapon = {
-  name: "Test Sword",
-  requirements: { str: 10, dex: 10 },
-  attack: [
-    { physical: 100 },   // +0
-    { physical: 110 },   // +1
-  ],
-  attributeScaling: [
-    { str: 0.5, dex: 0.3 },
-    { str: 0.52, dex: 0.31 },
-  ],
-  attackElementCorrect: {
-    physical: { str: true, dex: true  },
-  },
-  calcCorrectGraphs: {
-  physical: fakeCurve,
-  magic: fakeCurve,
-  fire: fakeCurve,
-  lightning: fakeCurve,
-  holy: fakeCurve,
-},
-};
+      // true for Shadow of the Erdtree weapons
+    dlc?: boolean;
+}

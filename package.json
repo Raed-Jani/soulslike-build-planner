@@ -7,9 +7,11 @@
     "doc": "docs"
   },
   "scripts": {
-    "test": "vitest",
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest",
+    "test:run": "vitest --run"
   },
   "repository": {
     "type": "git",
