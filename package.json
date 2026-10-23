@@ -1,14 +1,13 @@
 {
   "name": "soulslike-build-planner",
   "version": "1.0.0",
-  "description": "Attack rating calculator for Elden Ring.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "private": true,
+  "description": "Free, open-source Elden Ring attack rating calculator: weapons, affinities, status buildup and spell scaling.",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
     "test:run": "vitest --run"
@@ -17,14 +16,21 @@
     "type": "git",
     "url": "git+https://github.com/Raed-Jani/soulslike-build-planner.git"
   },
-  "keywords": [],
+  "keywords": [
+    "elden-ring",
+    "damage-calculator",
+    "attack-rating",
+    "weapon-calculator",
+    "typescript",
+    "react",
+    "vite"
+  ],
   "author": "Raed Jani",
   "license": "MIT",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/Raed-Jani/soulslike-build-planner/issues"
   },
-  "homepage": "https://github.com/Raed-Jani/soulslike-build-planner#readme",
+  "homepage": "https://raed-jani.github.io/soulslike-build-planner/",
   "devDependencies": {
     "@types/node": "^26.6.5",
     "@types/react": "^19.3.0",
