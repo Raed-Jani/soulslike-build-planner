@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const file = resolve("..", "reference-calculator", "public", "regulation-vanilla-v1.17.js");
+const file = resolve("public", "data", "regulation-vanilla-v1.17.json");
 const data = JSON.parse(readFileSync(file, "utf8"));
 
 // 1. each weaponType number, with example weapons (standard affinity only)

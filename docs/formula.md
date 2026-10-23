@@ -1,160 +1,142 @@
-# Elden Ring Damage Formula & Attack Rating (AR) Engine
+# How the attack rating is calculated
 
-This document explains the mathematical formula used by this application and Elden Ring's internal engine to compute Attack Rating (AR), status buildup, and spell scaling.
+This document describes what the calculator does, step by step. The formulas are implemented in [`src/calculateAR.ts`](../src/calculateAR.ts), and the curves are built in [`src/engine/buildWeapon.ts`](../src/engine/buildWeapon.ts). The numbers come from the game data of patch 1.17 (`public/data/regulation-vanilla-v1.17.json`).
 
-All calculations implemented in [`src/calculateAR.ts`](../src/calculateAR.ts) match FromSoftware's regulation data (patch 1.17) and have been verified with 0 discrepancies against 3,296 weapons in the reference calculator.
-
----
-
-## 1. Overview
-
-A weapon's total Attack Rating is the sum of its individual damage types:
-
-$$\text{Total AR} = \text{Physical} + \text{Magic} + \text{Fire} + \text{Lightning} + \text{Holy}$$
-
-Each damage type $d \in \{\text{physical}, \text{magic}, \text{fire}, \text{lightning}, \text{holy}\}$ is calculated independently based on the weapon's base damage, upgrade level, attribute scalings, and character attributes.
+The engine matches the reference calculator's code on every weapon (see the README), so the rules below are the ones that calculator also uses. Where this document says "verified", it names how.
 
 ---
 
-## 2. Base Damage & Reinforcement
+## 1. From game tables to a weapon
 
-Each weapon has a base damage value $B_{d, 0}$ for each damage type at level 0.
+The game stores its data as linked tables. A raw weapon record holds only:
 
-Upgrades apply a multiplier from the weapon's reinforcement track (`reinforceTypeId`):
-- Regular weapons: +0 to +25 (Smithing Stones)
-- Unique / Somber weapons: +0 to +10 (Somber Smithing Stones)
+- its base attack per damage type and its base scaling per attribute, at level +0
+- its attribute requirements
+- ids that point at other tables: a **reinforcement track** (the multipliers for each upgrade level), an **attack-element-correct** entry (which attributes feed which damage type) and, optionally, **curves**
 
-$$B_d(L) = B_{d, 0} \times M_{\text{reinforce}, d}(L)$$
+`buildWeapon` joins these into one object, so that the engine can read `attack[level][type]`, `attributeScaling[level][attribute]`, the attack-element-correct map and the curves directly.
 
-Where $M_{\text{reinforce}, d}(L)$ is the attack multiplier for damage type $d$ at upgrade level $L$.
+## 2. Inputs
 
----
+- the weapon, and its upgrade level $L$ (+0 to +25 for regular weapons, +0 to +10 for somber ones)
+- the attributes Strength, Dexterity, Intelligence, Faith and Arcane (Vigor, Mind and Endurance do not affect weapon damage)
+- one-handed or two-handed
 
-## 3. Attribute Scaling & Scaling Multipliers
+## 3. Base damage and scaling at a level
 
-Each weapon has base scaling coefficients for character attributes:
-- $\text{Str}$ (Strength)
-- $\text{Dex}$ (Dexterity)
-- $\text{Int}$ (Intelligence)
-- $\text{Fai}$ (Faith)
-- $\text{Arc}$ (Arcane)
+Each upgrade level has multipliers. For damage type $d$ and attribute $a$:
 
-At upgrade level $L$, base scaling $S_{a, 0}$ is scaled by the reinforcement track multiplier:
+$$B_d(L) = B_{d,0} \times M^{\text{attack}}_d(L) \qquad\qquad S_a(L) = S_{a,0} \times M^{\text{scaling}}_a(L)$$
 
-$$S_a(L) = S_{a, 0} \times M_{\text{scaling}, a}(L)$$
+$B_{d,0}$ and $S_{a,0}$ are the weapon's values at +0, and $M$ are the multipliers of its reinforcement track. So both the damage and the scaling grow with the level.
 
-### Scaling Grades (Letter Tiers)
+## 4. Which attributes feed which damage type
 
-Scaling values map to in-game letter grades according to threshold tiers:
-- **S**: $\ge 1.75$ (or $\ge 1.4$ depending on game curve tiers)
-- **A**: $\ge 1.40$
-- **B**: $\ge 0.90$
-- **C**: $\ge 0.60$
-- **D**: $\ge 0.25$
-- **E**: $> 0.00$
-- **-**: None ($0$)
+Each weapon has an attack-element-correct map. For each damage type it lists the attributes that scale it. For example, the Uchigatana's physical damage scales with Strength and Dexterity, and Moonveil's magic damage scales with Intelligence.
 
----
+An entry is normally `true` (full scaling). Some weapons have a fraction $c$ instead (24 weapons in patch 1.17, for example the Smithscript hammers and axes). Then the scaling used is
 
-## 4. Attack Element Correct (AEC)
+$$S'_a(L) = c \times \frac{S_a(L)}{S_a(0)}$$
 
-Not all attributes scale all damage types. The `AttackElementCorrect` matrix defines which attributes contribute to which damage types:
+## 5. Curves
 
-- **Physical**: Typically scales with Str, Dex, and occasionally Arcane.
-- **Magic**: Typically scales with Int, occasionally Str or Dex.
-- **Fire**: Scales with Str (Flame Art: Faith).
-- **Lightning**: Scales with Dex.
-- **Holy**: Scales with Faith.
+A curve turns an attribute value into a number between about 0 and 1 (the share of the scaling you receive). The data stores a curve as a list of stages, each with `maxVal`, `maxGrowVal` and `adjPt`. The code evaluates it once into an array $g[v]$ for $v = 0 \dots 148$, so a lookup is just `curve[stat]`. (148 because two-handing can raise Strength 99 to 148.)
 
-If an attribute $a$ is active for damage type $d$, it contributes scaling bonus to that damage type.
+Between two consecutive entries, with $v_0, g_0, p$ taken from the first entry and $v_1, g_1$ from the second:
 
----
+$$t = \operatorname{clamp}\left(\frac{v - v_0}{v_1 - v_0},\, 0,\, 1\right)$$
 
-## 5. Stat Curves (CalcCorrectGraph)
+$$t' = \begin{cases} t^{\,p} & p > 0 \\ 1 - (1 - t)^{-p} & p < 0 \\ t & p = 0 \end{cases} \qquad\qquad g(v) = g_0 + (g_1 - g_0)\, t'$$
 
-Elden Ring uses piecewise curves to calculate scaling efficiency. A curve maps an attribute value $v \in [1, 99]$ to a normalized growth fraction $g(v) \in [0.0, 1.0]$.
+The shape parameter $p$ (`adjPt`) is the one of the entry where the stage starts. This is a port of `evaluateCalcCorrectGraph` from the reference calculator (MIT license, see the README).
 
-Each curve consists of multiple soft-cap stages $[s_i, s_{i+1}]$ defined by:
-- $s_i$: Start stat value
-- $s_{i+1}$: End stat value
-- $g_i$: Start growth percentage
-- $g_{i+1}$: End growth percentage
-- $p$: Exponent / adjustment point (linear if 1, polynomial / concave if $>0$ or $<0$)
+Each weapon uses curve 0 for its damage types unless it names another one. The soft caps are not hard-coded anywhere: they are where the stages of the curve bend. In the vanilla data, the default curve is 0.25 at an attribute value of 18.
 
-For a stat $v$ between stage boundaries $s_i$ and $s_{i+1}$:
+## 6. Two-handing
 
-$$t = \frac{v - s_i}{s_{i+1} - s_i}$$
+Two-handing multiplies the effective Strength by 1.5, rounded down:
 
-If $p > 0$:
-$$g(v) = g_i + (g_{i+1} - g_i) \times t^p$$
+$$\text{Str}_{\text{eff}} = \lfloor 1.5 \times \text{Str} \rfloor$$
 
-If $p < 0$:
-$$g(v) = g_i + (g_{i+1} - g_i) \times \left(1 - (1 - t)^{|p|}\right)$$
+There is no cap at 99. Exceptions:
 
-Common soft caps in Elden Ring:
-- **18 / 20**: Early soft cap
-- **50 / 60**: Mid soft cap (primary breakpoint)
-- **80**: Hard soft cap (diminishing returns beyond this)
+1. **Paired weapons** (flagged `paired` in the data, 258 weapons in patch 1.17) never get the bonus.
+2. **Light bows, bows, greatbows and ballistae** (weapon types 50, 51, 53 and 56) are always treated as two-handed. Crossbows are not.
 
----
+The effective Strength is also the value compared with the Strength requirement.
 
-## 6. Two-Handing Mechanics
+## 7. Requirements and the penalty
 
-Two-handing a weapon gives a 50% bonus to effective Strength:
+An attribute is **unmet** when the effective attribute is lower than the weapon's requirement.
 
-$$\text{Effective Str} = \min\left(99, \lfloor 1.5 \times \text{Character Str} \rfloor\right)$$
+The penalty is applied **per damage type**: if any attribute that a damage type scales with is unmet, that damage type gets no scaling bonus and is multiplied by 0.6 instead:
 
-### Exceptions:
-1. **Paired Weapons** (e.g., Starscourge Greatsword, Claws, Fists): Two-handing dual-wields the weapon; no 1.5× Strength multiplier is applied.
-2. **Bows, Light Bows, Crossbows, and Ballistae**: Always require two hands; two-handing Strength is evaluated automatically.
+$$\text{AR}_d = B_d(L) \times 0.6$$
 
----
+Damage types that do not scale with the unmet attribute are not affected. For example, if Moonveil's Intelligence requirement is not met, its magic damage is reduced, while its physical damage (which scales with Strength and Dexterity) is calculated normally.
 
-## 7. Requirement Penalties
+## 8. Attack rating
 
-Weapons require minimum stats to wield effectively:
+When no penalty applies, for each damage type $d$:
 
-$$\text{Meets Requirements} = \forall a \in \{\text{str}, \text{dex}, \text{int}, \text{fai}, \text{arc}\}, \; \text{Stat}_a \ge \text{Req}_a$$
+$$\text{AR}_d = B_d(L) \times \left(1 + \sum_{a \,\in\, \text{AEC}(d)} S_a(L) \times g_d\!\left(\text{Stat}_a\right)\right)$$
 
-*(Strength is evaluated using effective Strength when two-handing).*
+where $\text{AEC}(d)$ is the set of attributes that feed $d$ (section 4), and $g_d$ is the curve of that damage type. The total is the sum over the damage types.
 
-If a character fails to meet the stat requirements:
-1. **Physical base damage receives a severe 40% penalty**:
-   $$B_{\text{physical, penalized}} = 0.6 \times B_{\text{physical}}$$
-2. **All attribute scaling is eliminated** ($0$ scaling bonus).
+Only the damage types the weapon actually has base damage for are calculated.
 
----
+## 9. How the numbers are shown
 
-## 8. Final Damage Calculation
+The game rounds each damage type **down**, and the total is the rounded-down sum of the **unrounded** values:
 
-When requirements are met:
+$$\text{shown}_d = \lfloor \text{AR}_d \rfloor \qquad\qquad \text{shown total} = \Big\lfloor \sum_d \text{AR}_d \Big\rfloor$$
 
-$$\text{AR}_d = B_d(L) \times \left(1 + \sum_{a \in \text{AEC}(d)} S_a(L) \times g_{d, a}(\text{Stat}_a)\right)$$
+So the total can be one higher than the sum of the shown parts. The "base + bonus" line is $\lfloor B_d \rfloor$ plus the difference to the shown value.
 
-The total Attack Power displayed in the UI is:
+## 10. Status buildup
 
-$$\text{Total AR} = \sum_{d} \lfloor \text{AR}_d \rfloor \quad \text{or displayed with precise per-type breakdown}$$
+There are seven statuses: poison, scarlet rot, blood loss, frostbite, sleep, madness and death blight. The buildup at a level comes from the status parameter the weapon points at, shifted by an offset that depends on the upgrade level.
 
-In the game status screen, base damage and scaling bonus are presented as:
+Only **poison, blood loss, sleep and madness** scale with Arcane. The others show their base value for the level. For those four:
 
-$$\text{Base} + \text{Scaling Bonus} = \text{Total}$$
+$$\text{Buildup} = \text{Base}(L) \times \left(1 + S_{\text{arc}}(L) \times g_{\text{status}}(\text{Arc})\right)$$
 
----
+with $\times\, 0.6$ instead when the Arcane requirement is not met. The default status curve is graph 6. Statuses that do not scale with Arcane are never reduced by the penalty.
 
-## 9. Status Buildup
+## 11. Spell scaling (staves and seals)
 
-Status effects (Bleed, Poison, Frostbite, Scarlet Rot, Sleep, Madness) apply auxiliary buildup per hit:
+For catalysts, the calculator reports a percentage for each element $e$. It uses the same multiplier as the attack rating, and it is reported even for elements where the weapon has no base damage:
 
-$$\text{Buildup} = \text{Base Buildup}(L) \times \left(1 + S_{\text{arc}}(L) \times g_{\text{status}}(\text{Arcane})\right)$$
+$$\text{Spell}_e = 100 \times \left(1 + \sum_{a \,\in\, \text{AEC}(e)} S_a(L) \times g_e\!\left(\text{Stat}_a\right)\right)$$
 
-Only weapons that possess innate Arcane scaling scale their status buildup with Arcane. Frostbite does not scale with stats in Elden Ring (fixed value per weapon level).
+100 means no bonus. With the requirement penalty the value is 60. Only elements that some attribute scales are listed. This is the multiplier on spell power. The damage of a specific spell would also need that spell's own base damage, which this calculator does not include.
 
----
+## 12. Scaling grades
 
-## 10. Spell Scaling (Catalysts)
+A scaling value $S_a(L)$ is shown as a letter: the first tier whose threshold it reaches. The tiers come from the data (`scalingTiers`):
 
-For Glintstone Staves (sorcery) and Sacred Seals (incantations):
+| Letter | Threshold |
+|---|---|
+| S | ≥ 1.75 |
+| A | ≥ 1.40 |
+| B | ≥ 0.90 |
+| C | ≥ 0.60 |
+| D | ≥ 0.25 |
+| E | ≥ 0.01 |
+| - | below 0.01 |
 
-$$\text{Spell Scaling} = 100 \times \left(1 + \sum_{a} S_a(L) \times g_{\text{catalyst}}(\text{Stat}_a)\right)$$
+## 13. Worked examples
 
-This represents the spell damage multiplier expressed as a percentage (e.g., 250 = 250% base spell power).
+**Uchigatana +0, Strength 18, Dexterity 18** (one-handed). From the data: base physical 115, scaling 0.36 (Strength) and 0.55 (Dexterity), and the curve value at 18 is 0.25.
+
+$$115 \times (1 + 0.25 \times 0.36 + 0.25 \times 0.55) = 141.1625 \;\to\; 141$$
+
+The reference calculator's website shows 141.
+
+**Moonveil +10, Str 12, Dex 24, Int 40, Fai 10, Arc 10.** The engine gives physical 238.41 and magic 366.62, a sum of 605.03. The game and the reference website show 238, 366 and a total of 605, not 604.
+
+**Uchigatana +25** with the same attributes gives 382.05, shown as 382.
+
+## 14. Not modelled
+
+Enemy defense and damage negation, temporary buffs, weapon skills and their motion values, armor and talismans, and the damage of individual spells. Only the vanilla data of patch 1.17 is supported.

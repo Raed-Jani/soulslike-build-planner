@@ -18,7 +18,7 @@ export default function Header({ repo, dataVersion }: Props) {
         </div>
         <p className="subtitle">Attack rating by weapon, upgrade level, affinity, and attributes</p>
         <p className="scope-note">
-          Does not include spell scaling, status buildup, buffs, enemy defense or talismans.
+          Does not include enemy defense, buffs, weapon-skill effects, armor or talismans.
         </p>
       </div>
 

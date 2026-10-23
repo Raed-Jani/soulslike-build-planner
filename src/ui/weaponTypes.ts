@@ -71,7 +71,7 @@ export const WEAPON_TYPE_GROUPS: WeaponTypeGroup[] = [
   },
     {
     key: "casting",
-    label: "catalysts",
+    label: "Catalysts",
     types: [
       { id: 57, label: "Glintstone Staff" },
       { id: 61, label: "Sacred Seal" },

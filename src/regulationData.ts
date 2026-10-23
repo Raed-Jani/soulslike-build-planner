@@ -1,42 +1,46 @@
 import type { Attribute } from "./attributes";
-import type { DamageType } from "./weapon";
 import type { ScalingTiers } from "./calculateAR";
 
-// ── Raw shape of regulation-vanilla-v1.17.json ──────────────────────────────
+// Shape of regulation-vanilla-v1.17.json
 
 /** One stage of a calc-correct graph, as stored in the JSON. */
-interface CalcCorrectStage {
+export interface CalcCorrectStage {
   maxVal: number;
   maxGrowVal: number;
   adjPt: number;
 }
 
-/** Per-level reinforce multipliers for one weapon type. */
-interface ReinforceRow {
-  attack: (number | undefined)[];
-  attributeScaling: Partial<Record<Attribute, number>>;
-  statusSpEffectId1: number;
-  statusSpEffectId2: number;
-  statusSpEffectId3: number;
+/** Multipliers for one upgrade level of a reinforcement track. */
+export interface ReinforceRow {
+  /** damage type id (0..4) -> multiplier. An object keyed by id in the JSON, not an array. */
+  attack: Partial<Record<number, number>>;
+  /** present for all five attributes in the data */
+  attributeScaling: Record<Attribute, number>;
+  statusSpEffectId1?: number;
+  statusSpEffectId2?: number;
+  statusSpEffectId3?: number;
 }
 
-/** Attack-element-correct entry: which stats drive which damage type. */
-type AttackElementCorrectRaw = Partial<Record<number, Partial<Record<Attribute, number | true>>>>;
+/** Damage type id -> which attributes feed it (true = full scaling, a number = a fraction). */
+export type AttackElementCorrectRaw = Partial<
+  Record<number, Partial<Record<Attribute, number | true>>>
+>;
 
-/** A raw weapon record from the JSON (before buildWeapon processes it). */
+/** A raw weapon record from the JSON, before buildWeapon processes it. */
 export interface RawWeapon {
   name: string;
   weaponType: number;
   affinityId: number;
   reinforceTypeId: number;
   attackElementCorrectId: number;
-  paired: boolean;
-  sorceryTool: boolean;
-  incantationTool: boolean;
+  /** missing for most weapons */
+  paired?: boolean;
+  sorceryTool?: boolean;
+  incantationTool?: boolean;
   requirements: Partial<Record<Attribute, number>>;
-  /** [damageTypeIndex, baseValue][] */
+  /** [damage or status type id, base value][] */
   attack: [number, number][];
-  /** [statKey, baseScaling][] */
+  /** [attribute, base scaling][] */
   attributeScaling: [Attribute, number][];
   calcCorrectGraphIds?: Partial<Record<number, number>>;
   statusSpEffectParamIds?: number[];
@@ -47,14 +51,13 @@ export interface RawWeapon {
 /** The full shape of the regulation JSON fetched at runtime. */
 export interface RegulationData {
   weapons: RawWeapon[];
-  /** id → stages */
+  /** graph id -> stages */
   calcCorrectGraphs: Record<number, CalcCorrectStage[]>;
-  /** id → per-level rows */
+  /** track id -> one row per upgrade level */
   reinforceTypes: Record<number, ReinforceRow[]>;
-  /** id → per-damage-type maps */
   attackElementCorrects: Record<number, AttackElementCorrectRaw>;
-  /** id → {[statusTypeId]: buildup} */
+  /** status parameter id -> { status type id: buildup } */
   statusSpEffectParams: Record<number, Record<number, number>>;
-  /** [[threshold, letter], …] */
+  /** [[threshold, letter], ...] from the highest threshold to the lowest */
   scalingTiers: ScalingTiers;
 }
