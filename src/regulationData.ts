@@ -29,6 +29,9 @@ export type AttackElementCorrectRaw = Partial<
 /** A raw weapon record from the JSON, before buildWeapon processes it. */
 export interface RawWeapon {
   name: string;
+  weaponName: string;
+  /** Explicit wiki page override; null disables linking. */
+  url?: string | null;
   weaponType: number;
   affinityId: number;
   reinforceTypeId: number;

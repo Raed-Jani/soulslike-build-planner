@@ -13,6 +13,9 @@ export type AttackElementCorrect = Partial<
 >;
 export interface Weapon {
     name: string;
+    /** Base name without affinity, used for external weapon information. */
+    weaponName?: string;
+    url?: string | null;
       // minimum stats to use the weapon properly
     requirements: Partial<Record<Attribute, number>>;
       // index = upgrade level, so attack[10] is the damage at +10

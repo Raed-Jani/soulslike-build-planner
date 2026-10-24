@@ -124,6 +124,8 @@ export function makeBuilder(data: RegulationData) {
 
     return {
       name: w.name,
+      weaponName: w.weaponName,
+      url: w.url,
       weaponType: w.weaponType,
       paired: w.paired ?? false,
       sorceryTool: w.sorceryTool ?? false,

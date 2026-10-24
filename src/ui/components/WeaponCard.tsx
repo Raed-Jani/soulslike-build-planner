@@ -8,6 +8,7 @@ import type { Attributes } from "../../attributes";
 import type { Weapon } from "../../weapon";
 import { affinityInfo, type AffinityKey } from "../affinities";
 import { Icon } from "../icons";
+import { weaponWikiUrl } from "../weaponWiki";
 import AttackPanel from "./AttackPanel";
 import RequirementsPanel from "./RequirementsPanel";
 import ScalingPanel from "./ScalingPanel";
@@ -37,6 +38,7 @@ export default function WeaponCard({
   const detail = calculateARDetail(weapon, stats, safeLevel, twoHanding);
   const effective = adjustForTwoHanding(weapon, stats, twoHanding);
   const info = affinityInfo(affinity);
+  const wikiUrl = weaponWikiUrl(weapon);
 
   return (
     <article className="weapon-card">
@@ -44,7 +46,20 @@ export default function WeaponCard({
         <div className="card-title">
           <h2>
             {info && <Icon name={info.icon} size={28} label={info.label} />}
-            {weapon.name}
+            {wikiUrl ? (
+              <a
+                className="weapon-wiki-link"
+                href={wikiUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`${weapon.name} on Elden Ring Wiki (opens in a new tab)`}
+              >
+                {weapon.name}
+                <svg className="external-link-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M14 3h7v7M21 3 10 14M10 3H3v18h18v-7" />
+                </svg>
+              </a>
+            ) : weapon.name}
             {weapon.dlc && <span className="dlc-badge">DLC</span>}
           </h2>
           <button
