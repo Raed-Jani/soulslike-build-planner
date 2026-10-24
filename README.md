@@ -11,6 +11,8 @@ A free, open-source attack rating calculator for Elden Ring. Pick any weapon, se
 
 ## Features
 
+- **Phone-friendly comparison workflow**: collapsible weapon browsing and filters, a jump to results, a compact sticky attribute bar, and larger touch controls. Shared comparisons open directly to their results on small screens.
+- **Shareable comparisons**: copy a versioned link containing your attributes, weapons, upgrade levels and handing modes, or bookmark it to restore the comparison. Weapon identifiers survive dataset reordering; see [`docs/share-links.md`](docs/share-links.md).
 - **Attack rating per damage type** (physical, magic, fire, lightning, holy), shown as base + scaling bonus, with a total that follows the game's rounding
 - **Upgrade levels** with the right maximum for each weapon (+25 regular, +10 somber)
 - **Two-handing**, including the special cases: paired weapons get no bonus, and light bows, bows, greatbows and ballistae are always two-handed

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { affinityInfo, type AffinityKey } from "../affinities";
 import { Icon } from "../icons";
 
@@ -30,6 +30,8 @@ export default function WeaponPicker({
   query, onQueryChange, matches, total, chosen, onToggle, children,
 }: Props) {
   const pickedSet = new Set(chosen.map((c) => c.index));
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterId = useId();
 
   return (
     <section className="weapon-picker">
@@ -64,7 +66,18 @@ export default function WeaponPicker({
         onChange={(e) => onQueryChange(e.target.value)}
       />
 
-      {children}
+      <button
+        type="button"
+        className="mobile-filter-toggle"
+        aria-expanded={filtersOpen}
+        aria-controls={filterId}
+        onClick={() => setFiltersOpen(!filtersOpen)}
+      >
+        Weapon types & affinities <span aria-hidden="true">{filtersOpen ? "−" : "+"}</span>
+      </button>
+      <div id={filterId} className={`picker-filter-content${filtersOpen ? " is-open" : ""}`}>
+        {children}
+      </div>
 
       <ul className="weapon-results">
         {matches.map((m) => {

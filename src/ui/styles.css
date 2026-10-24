@@ -98,6 +98,23 @@ h3 {
   flex-shrink: 0;
 }
 
+.weapon-browser-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-browser-toggle,
+.mobile-view-results,
+.mobile-filter-toggle {
+  display: none;
+}
+
+.picker-filter-content .affinity-filter {
+  border: 0;
+  padding: 0 0 12px;
+}
+
 .output {
   min-width: 0;
 }
@@ -664,6 +681,66 @@ input[type="checkbox"] {
   text-decoration: underline;
 }
 
+.footer-grid > * {
+  min-width: 0;
+}
+
+.footer-grid p {
+  margin: 0 0 8px;
+}
+
+.footer-grid a {
+  overflow-wrap: anywhere;
+}
+
+.footer-data-version {
+  color: var(--text);
+}
+
+.footer-developer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0;
+  border-top: 1px solid var(--border);
+}
+
+.footer-eyebrow {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+}
+
+.footer-developer strong {
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.footer-profiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-profiles a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--surface);
+}
+
+.footer-profiles a:hover {
+  border-color: var(--accent);
+  text-decoration: none;
+}
+
 .footer-legal {
   display: flex;
   justify-content: space-between;
@@ -848,13 +925,50 @@ input[type="checkbox"] {
 
 /* ---------- phones ---------- */
 
-@media (max-width: 760px) {
+.share-comparison {
+  margin: 12px 0;
+}
+
+.share-comparison button {
+  background: var(--surface);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.share-comparison label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+}
+
+.share-comparison input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.share-comparison p,
+.share-notice {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.share-comparison p:empty {
+  display: none;
+}
+
+@media (max-width: 900px) {
   .app {
     padding: 12px;
   }
 
   .layout {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .inputs {
@@ -864,27 +978,236 @@ input[type="checkbox"] {
     padding-right: 0;
   }
 
-    .stats-bar {
-    position: static;
-    padding-top: 0;
+  .mobile-browser-toggle,
+  .mobile-view-results,
+  .mobile-filter-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--accent);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .selection-count {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .weapon-browser-content {
+    display: none;
+    gap: 12px;
+  }
+
+  .weapon-browser-content.is-open {
+    display: flex;
+  }
+
+  .mobile-filter-toggle {
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+
+  .picker-filter-content {
+    display: none;
+  }
+
+  .picker-filter-content.is-open {
+    display: block;
+  }
+
+  .mobile-view-results {
+    position: sticky;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    z-index: 11;
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 4px 18px #0006;
+  }
+
+  .stats-bar {
+    position: sticky;
+    padding-top: 4px;
+    margin-bottom: 4px;
   }
 
   .stats-inner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 12px;
   }
 
   .stat-row {
     margin-left: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .stat-field {
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .stat-field input {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 6px 2px;
+  }
+
+  .app-header {
+    margin-bottom: 16px;
+    gap: 10px;
+  }
+
+  .app-header h1 {
+    font-size: clamp(1.25rem, 5vw, 1.65rem);
+  }
+
+  .scope-note {
+    opacity: 1;
+  }
+
+  .weapon-picker,
+  .affinity-filter,
+  .weapon-card {
+    padding: 12px;
+    min-width: 0;
+  }
+
+  .weapon-results {
+    max-height: min(320px, 45svh);
+  }
+
+  .weapon-results button {
+    min-height: 48px;
+  }
+
+  .weapon-results button > span:not(.dlc-badge):not(.check),
+  .chosen-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .chosen li button,
+  .weapon-card .remove {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .affinity-grid {
+    gap: 4px 8px;
+  }
+
+  .affinity-grid label,
+  .type-group label,
+  .type-toggle,
+  .link-button,
+  .weapon-card header > label {
+    min-height: 44px;
+  }
+
+  input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin: 0;
+  }
+
+  .weapon-card header > label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .weapon-card select,
+  input[type="search"],
+  .share-comparison input {
+    min-height: 44px;
+    font-size: 16px;
   }
 
   .weapon-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+  }
+
+  .attack-panel {
+    grid-column: 1 / -1;
+  }
+
+  .weapon-card h2 {
+    min-width: 0;
+    flex: 1;
+    display: block;
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .weapon-card h2 > .icon {
+    margin-right: 6px;
+  }
+
+  .weapon-card h2 > .dlc-badge {
+    margin-left: 6px;
+  }
+
+  .card-title {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .weapon-wiki-link {
+    overflow-wrap: anywhere;
+  }
+
+  .requirements-panel li {
+    flex-wrap: wrap;
+    gap: 2px 6px;
+  }
+
+  .requirements-panel em {
+    flex-basis: 100%;
+  }
+
+  .share-comparison button {
+    min-height: 44px;
+    width: 100%;
+  }
+
+  .output {
+    scroll-margin-top: 8px;
+  }
+
+  .output:focus:not(:focus-visible) {
+    outline: none;
   }
 
   .footer-grid {
     grid-template-columns: 1fr;
     gap: 24px;
+  }
+
+  .footer-developer {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .footer-legal {
@@ -895,12 +1218,26 @@ input[type="checkbox"] {
     text-align: left;
   }
 
-    .github-link span {
+  .github-link span {
     display: none;
   }
 
   .github-link {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
     padding: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .selection-count {
+    font-size: 0.7rem;
+  }
+
+  .mobile-browser-toggle {
+    gap: 6px;
+    font-size: 0.9rem;
   }
 }
 

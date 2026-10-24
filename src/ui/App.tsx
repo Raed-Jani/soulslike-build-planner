@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { ScalingTiers } from "../calculateAR";
 import type { Attributes } from "../attributes";
 import type { RegulationData } from "../regulationData";
@@ -13,9 +13,11 @@ import WeaponCard from "./components/WeaponCard";
 import WeaponPicker from "./components/WeaponPicker";
 import WeaponTypeFilter from "./components/WeaponTypeFilter";
 import Header from "./components/Header";
+import Footer from "./components/Footer";
+import { DATA_VERSION, decodeComparison, encodeComparison } from "./shareComparison";
+import ShareComparison from "./components/ShareComparison";
 
 const REPO = "https://github.com/Raed-Jani/soulslike-build-planner";
-const DATA_VERSION = "1.17";
 
 export default function App() {
   const [data, setData] = useState<RegulationData | null>(null);
@@ -27,6 +29,9 @@ export default function App() {
   const [levels, setLevels] = useState<Record<number, number>>({});
   const [twoHandings, setTwoHandings] = useState<Record<number, boolean>>({});
   const [types, setTypes] = useState<Set<number>>(new Set()); // empty = every type
+  const [linkNotice, setLinkNotice] = useState("");
+  const [browserOpen, setBrowserOpen] = useState(true);
+  const outputRef = useRef<HTMLElement>(null);
   const [statText, setStatText] = useState<StatText>({
     str: "18", dex: "18", int: "10", fai: "10", arc: "10",
   });
@@ -49,6 +54,27 @@ export default function App() {
   }, [retryKey]);
 
   const build = useMemo(() => (data ? makeBuilder(data) : null), [data]);
+
+  useEffect(() => {
+    if (!data) return;
+    function restoreComparison() {
+      try {
+        const restored = decodeComparison(window.location.hash, data!);
+        if (!restored) { setLinkNotice(""); return; }
+        setStatText(restored.state.statText);
+        setPicked(restored.state.picked);
+        setLevels(restored.state.levels);
+        setTwoHandings(restored.state.twoHandings);
+        setBrowserOpen(false);
+        setLinkNotice(restored.warnings.join(" ") || "Shared comparison loaded.");
+      } catch (error) {
+        setLinkNotice(error instanceof Error ? error.message : "Could not load this comparison link.");
+      }
+    }
+    restoreComparison();
+    window.addEventListener("hashchange", restoreComparison);
+    return () => window.removeEventListener("hashchange", restoreComparison);
+  }, [data]);
 
   // the first 50 weapons matching the search text, the type filter and the ticked affinities
 const matches = useMemo(() => {
@@ -98,6 +124,7 @@ const typeCounts = useMemo(() => {
     if (!data) return;
     // new weapons start at their maximum level, like the reference calculator
     const maxLevel = data.reinforceTypes[data.weapons[index].reinforceTypeId].length - 1;
+    setBrowserOpen(true);
     setPicked([...picked, index]);
     setLevels({ ...levels, [index]: maxLevel });
   }
@@ -145,6 +172,18 @@ function toggleGroup(ids: number[]) {
       <Header repo={REPO} dataVersion={DATA_VERSION} />
       <main className="layout">
         <aside className="inputs">
+          <button
+            type="button"
+            className="mobile-browser-toggle"
+            aria-expanded={browserOpen}
+            aria-controls="weapon-browser"
+            onClick={() => setBrowserOpen(!browserOpen)}
+          >
+            <span>{browserOpen ? "Choose weapons" : "Add or change weapons"}</span>
+            <span className="selection-count">{picked.length} selected</span>
+            <span aria-hidden="true">{browserOpen ? "−" : "+"}</span>
+          </button>
+          <div id="weapon-browser" className={`weapon-browser-content${browserOpen ? " is-open" : ""}`}>
           <WeaponPicker
             query={query}
             onQueryChange={setQuery}
@@ -160,12 +199,37 @@ function toggleGroup(ids: number[]) {
               onToggleGroup={toggleGroup}
               onClear={() => setTypes(new Set())}
             />
+            <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
           </WeaponPicker>
-          <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
+          {picked.length > 0 && (
+            <button type="button" className="mobile-view-results" onClick={() => {
+              setBrowserOpen(false);
+              outputRef.current?.focus({ preventScroll: true });
+              outputRef.current?.scrollIntoView({ block: "start" });
+            }}>
+              View comparison ({picked.length}) <span aria-hidden="true">↓</span>
+            </button>
+          )}
+          </div>
         </aside>
 
-        <section className="output">
+        <section className="output" ref={outputRef} tabIndex={-1} aria-label="Weapon comparison">
           <StatsForm statText={statText} onChange={changeStat} />
+          <ShareComparison
+            // Reset the generated link and clipboard message when the comparison
+            // changes. Search/filter edits do not change the shared comparison.
+            key={JSON.stringify([statText, picked.map((index) => [index, levels[index] ?? 0, twoHandings[index] ?? false])])}
+            createLink={() => {
+            const url = new URL(window.location.href);
+            // Share the same normalized attributes that the calculator currently uses.
+            const normalized = Object.fromEntries(
+              Object.entries(statText).map(([key, value]) => [key, String(parseStat(value))])
+            ) as StatText;
+            url.hash = encodeComparison({ statText: normalized, picked, levels, twoHandings }, data);
+            window.history.replaceState(null, "", url);
+            return url.href;
+          }} />
+          {linkNotice && <p className="share-notice" role="status">{linkNotice}</p>}
           {built.length === 0 ? (
             <p className="empty">Pick one or more weapons to see their attack rating.</p>
           ) : (
@@ -188,48 +252,7 @@ function toggleGroup(ids: number[]) {
           )}
         </section>
       </main>
-      <footer className="app-footer">
-      <div className="footer-grid">
-        <div className="footer-brand">
-          <strong>Elden Ring Damage Calculator</strong>
-          <p>
-            A free, open-source attack rating calculator. It runs entirely in your browser, and
-            nothing is sent anywhere.
-          </p>
-          <p className="footer-stack">Built with TypeScript, React and Vite.</p>
-        </div>
-        <nav aria-label="Project">
-          <h3>Project</h3>
-          <ul>
-            <li><a href={REPO}>Source code</a></li>
-            <li><a href={`${REPO}/issues`}>Report an issue</a></li>
-            <li><a href={`${REPO}/blob/main/LICENSE`}>MIT license</a></li>
-          </ul>
-        </nav>
-        <nav aria-label="Credits">
-          <h3>Credits and data</h3>
-          <ul>
-            <li>
-              Weapon data:{" "}
-              <a href="https://github.com/ThomasJClark/elden-ring-weapon-calculator">
-                elden-ring-weapon-calculator
-              </a>{" "}
-              by Tom Clark (MIT)
-            </li>
-            <li>Data version: patch {DATA_VERSION}</li>
-          </ul>
-        </nav>
-      </div>
-      <div className="footer-legal">
-        <p>
-          © 2026 <a href="https://github.com/Raed-Jani">Raed Jani</a>
-        </p>
-        <p>
-          Fan-made, non-commercial project. Not affiliated with or endorsed by FromSoftware or Bandai
-          Namco. ELDEN RING, its game data, names and icons belong to FromSoftware / Bandai Namco.
-        </p>
-      </div>
-    </footer>
+      <Footer repo={REPO} dataVersion={DATA_VERSION} />
     </div>
   );
 }
