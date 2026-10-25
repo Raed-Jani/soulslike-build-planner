@@ -4,14 +4,15 @@
 
 **[Open the live calculator](https://raed-jani.github.io/soulslike-build-planner/)**
 
-A free, open-source Elden Ring calculator built with React, TypeScript and Vite. Explore weapon attack rating, status buildup and spell scaling, or compare two builds with independent attributes, affinities, upgrade levels and handling. All calculations run in your browser, with no account or backend required.
+A free, open-source Elden Ring calculator for two practical questions: **Which weapon suits my attributes?** and **How do different configurations affect the same weapon?** Compare multiple weapons using shared attributes, or experiment with independent A/B attributes, affinities, upgrade levels and handling for one weapon. Explore attack rating, status buildup and spell scaling, all calculated in your browser with no account or backend required. Built with React, TypeScript and Vite.
 
 
 ![Screenshot of the Elden Ring Damage Calculator](docs/screenshot.png)
 
 ## Features
 
-- **Independent A/B build comparison**: change attributes, affinity, upgrade level and handling separately for the same base weapon. Compare AR, damage types, individual buildups and spell scaling with signed differences. Offensive attribute totals and requirement changes provide context without declaring a universal winner. Copy A to B to start another experiment; see [comparison details](docs/stat-comparison.md).
+- **Compare different weapons**: select multiple weapons and inspect their result cards together using your shared attributes. Each weapon has its own upgrade and handling settings, with attack rating, requirements, scaling and applicable buildup or spell scaling available for comparison.
+- **Compare configurations of the same weapon**: change attributes, affinity, upgrade level and handling independently in A and B for the same base weapon. Compare AR, damage types, individual buildups and spell scaling with signed differences. Offensive attribute totals and requirement changes provide context without declaring a universal winner. Copy A to B to start another experiment; see [comparison details](docs/stat-comparison.md).
 - **Affinity scaling previews**: expand either comparison affinity picker to see available affinities, icons and STR/DEX/INT/FAI/ARC scaling grades at that configuration's upgrade level.
 - **Phone-friendly comparison workflow**: collapsible weapon browsing and filters, a jump to results, a compact sticky attribute bar, and larger touch controls. Shared comparisons open directly to their results on small screens.
 - **Shareable comparisons**: capture selected weapons, shared attributes and both A/B configurations, including affinities, upgrade levels and handling. Versioned links use weapon identifiers that survive dataset reordering. Editing the setup hides the old generated link so you can create an updated one; see [share-link format and compatibility](docs/share-links.md).
@@ -28,7 +29,13 @@ A free, open-source Elden Ring calculator built with React, TypeScript and Vite.
 
 **Not included:** enemy defense and damage against a specific enemy, temporary buffs, weapon skill effects, armor and talismans. Spell scaling is the multiplier on spell power, not the damage of a specific spell. Only the vanilla game data of patch 1.17 is used.
 
-## Try a build comparison
+## Compare different weapons
+
+Search for and select **Uchigatana** and **Nagakiba**, then set your attributes in the shared bar. Both weapon cards use those attributes, so you can inspect their attack rating, requirements, scaling and blood-loss buildup together. Adjust each weapon's upgrade level and handling as needed. Remove a weapon from the selected list or its card when you finish comparing it.
+
+This helps compare calculated weapon output for your attributes. Reach, weight, movesets and attack speed are not evaluated, so the calculator does not choose a universally best weapon.
+
+## Compare configurations of the same weapon
 
 For example: **How does a Strength-focused Heavy Uchigatana compare with a Dexterity-focused Keen Uchigatana at equal offensive investment?**
 

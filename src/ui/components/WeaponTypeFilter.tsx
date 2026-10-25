@@ -15,9 +15,8 @@ export default function WeaponTypeFilter({
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   return (
-    <div className="type-filter">
+    <section className="type-filter" aria-label="Weapon type filters">
       <div className="type-filter-head">
-        <h3>Browse by type</h3>
         {selected.size > 0 && (
           <button type="button" className="link-button" onClick={onClear}>
             Clear ({selected.size})
@@ -73,6 +72,6 @@ export default function WeaponTypeFilter({
           </div>
         );
       })}
-    </div>
+    </section>
   );
 }

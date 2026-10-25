@@ -87,7 +87,8 @@ h3 {
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
+  scrollbar-color: var(--muted) var(--surface);
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -152,13 +153,41 @@ input[type="checkbox"] {
   width: 100%;
 }
 
+.weapon-search-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  margin: -16px -16px 12px;
+  padding: 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.weapon-filter-toggle.selected-weapons-toggle { margin-top: 6px; min-height: 32px; padding: 4px; }
+.weapon-search-header .chosen { margin: 4px 0 0; }
+.selected-weapons-toggle .filter-chevron { margin-left: auto; }
+.chosen[hidden] { display: none; }
+.weapon-filter-section { margin-bottom: 10px; }
+.weapon-filter-toggle { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 8px 4px; border: 0; border-radius: 4px; background: transparent; color: var(--text); font: inherit; font-size: 0.85rem; text-align: left; cursor: pointer; }
+.weapon-filter-toggle:hover { background: var(--surface-2); }
+.weapon-filter-toggle small { margin-left: auto; color: var(--muted); font-size: 0.75rem; }
+.weapon-filter-toggle > span:first-child { font-family: var(--sans); font-size: 0.8rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.filter-chevron { flex: 0 0 8px; height: 8px; margin: 0 4px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+.weapon-filter-toggle[aria-expanded="true"] .filter-chevron { transform: rotate(225deg); }
+.browser-panel[hidden] { display: none; }
+.browser-panel:not([hidden]) { display: block; padding: 8px 0 12px; border-bottom: 1px solid var(--border); }
+.browser-panel .type-filter { margin: 0; padding: 0; border: 0; }
+.weapon-result-count { margin: 12px 0 4px; color: var(--muted); font-size: 0.75rem; }
+.weapon-show-more { width: 100%; min-height: 44px; margin-top: 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-2); color: var(--accent); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.weapon-show-more:hover { border-color: var(--accent); }
+
 .weapon-results {
   overscroll-behavior: contain;
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
-  max-height: 240px;
-  overflow-y: auto;
+  max-height: none;
+  overflow: visible;
 }
 
 .weapon-results button {
@@ -228,14 +257,22 @@ input[type="checkbox"] {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  max-height: min(180px, 25svh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--muted) transparent;
+  padding-right: 4px;
 }
 
 .chosen li {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 6px 4px 10px;
+  gap: 6px;
+  padding: 2px 4px 2px 8px;
+  min-height: 32px;
+  font-size: 0.8rem;
   border-radius: 6px;
   background: color-mix(in srgb, var(--accent) 14%, var(--surface-2));
   box-shadow: inset 3px 0 0 var(--accent);
@@ -245,6 +282,9 @@ input[type="checkbox"] {
 .chosen li .chosen-name {
   flex: 1;
   min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chosen li .dlc-badge {
@@ -304,11 +344,13 @@ input[type="checkbox"] {
   margin: 0;
   padding: 0;
   border: 0;
-  font-size: 1.7rem;
+  font-size: 1.9rem;
   line-height: 1.2;
 }
 
 .version-badge {
+  flex-shrink: 0;
+  align-self: center;
   padding: 2px 10px;
   border: 1px solid var(--border);
   border-radius: 999px;
@@ -321,13 +363,13 @@ input[type="checkbox"] {
 }
 
 .subtitle {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
   color: var(--muted);
   font-size: 0.9rem;
 }
 
 .scope-note {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   color: var(--muted);
   font-size: 0.78rem;
   opacity: 0.75;
@@ -1106,7 +1148,10 @@ input[type="checkbox"] {
     max-height: none;
     overflow: visible;
     padding-right: 0;
+    scrollbar-gutter: auto;
   }
+
+  .weapon-search-header { position: static; margin: -12px -12px 12px; padding: 12px; }
 
   .mobile-browser-toggle,
   .mobile-view-results,
@@ -1147,14 +1192,6 @@ input[type="checkbox"] {
     margin-top: 8px;
     color: var(--text);
     font-size: 0.85rem;
-  }
-
-  .picker-filter-content {
-    display: none;
-  }
-
-  .picker-filter-content.is-open {
-    display: block;
   }
 
   .mobile-view-results {
@@ -1223,6 +1260,7 @@ input[type="checkbox"] {
 
   .weapon-results {
     max-height: min(320px, 45svh);
+    overflow-y: auto;
   }
 
   .weapon-results button {

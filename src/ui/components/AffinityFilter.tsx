@@ -8,8 +8,7 @@ interface Props {
 
 export default function AffinityFilter({ selected, onToggle }: Props) {
   return (
-    <section className="affinity-filter">
-      <h2>Affinity</h2>
+    <section className="affinity-filter" aria-label="Affinity filters">
       <div className="affinity-grid">
         {AFFINITIES.map((a) => (
           <label key={a.key} title={a.label}>

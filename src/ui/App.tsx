@@ -80,7 +80,7 @@ export default function App() {
     return () => window.removeEventListener("hashchange", restoreComparison);
   }, [data]);
 
-  // the first 50 weapons matching the search text, the type filter and the ticked affinities
+  // Match the dataset here; the picker progressively displays batches of 50.
 const matches = useMemo(() => {
   const list: { index: number; name: string; affinity: AffinityKey; dlc: boolean }[] = [];
   let total = 0;
@@ -93,7 +93,7 @@ const matches = useMemo(() => {
     if (!key || !affinities.has(key)) continue;
     if (q !== "" && !w.name.toLowerCase().includes(q)) continue;
     total++;
-    if (list.length < 50) list.push({ index: i, name: w.name, affinity: key, dlc: w.dlc ?? false });
+    list.push({ index: i, name: w.name, affinity: key, dlc: w.dlc ?? false });
   }
   return { list, total };
 }, [data, query, affinities, types]);
@@ -187,7 +187,7 @@ function toggleGroup(ids: number[]) {
     <div className="app">
       <Header repo={REPO} dataVersion={DATA_VERSION} />
       <main className="layout">
-        <aside className="inputs">
+        <aside className="inputs" aria-label="Weapon browser" tabIndex={0}>
           <button
             type="button"
             className="mobile-browser-toggle"
@@ -207,16 +207,17 @@ function toggleGroup(ids: number[]) {
             total={matches.total}
             chosen={built.map(({ index, weapon, affinity }) => ({ index, name: weapon.name, affinity, dlc: weapon.dlc }))}
             onToggle={togglePick}
-          >
-            <WeaponTypeFilter
+            typeCount={types.size}
+            affinityCount={affinities.size}
+            typeFilter={<WeaponTypeFilter
               selected={types}
               counts={typeCounts}
               onToggleType={toggleType}
               onToggleGroup={toggleGroup}
               onClear={() => setTypes(new Set())}
-            />
-            <AffinityFilter selected={affinities} onToggle={toggleAffinity} />
-          </WeaponPicker>
+            />}
+            affinityFilter={<AffinityFilter selected={affinities} onToggle={toggleAffinity} />}
+          />
           {picked.length > 0 && (
             <button type="button" className="mobile-view-results" onClick={() => {
               setBrowserOpen(false);
