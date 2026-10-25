@@ -9,7 +9,43 @@ State lives in a URL fragment (`#build=` plus URI-encoded JSON); there is no
 backend, account, or server-side storage. Initial loading and subsequent hash
 navigation restore the comparison after the regulation data becomes available.
 
-## Version 1
+## Version 4 (current)
+
+New links use `v: 4`. Configurations may include an integer `affinityId`; omission
+uses the parent weapon affinity. Each affinity must exist for that exact base
+weapon, and upgrade limits are checked against that variant. Unknown or mismatched
+affinities reject the link rather than silently calculating a different weapon.
+Older v1–v3 formats remain supported with the original parent affinity.
+
+## Version 3 (still supported)
+
+V3 links use `v: 3`. Each A/B configuration includes `level` (an integer valid
+for the weapon) and `twoHanding` (boolean), in addition to `id` and `stats`.
+For example: `{ "id": "b", "stats": [18,40,10,10,10], "level": 12, "twoHanding": true }`.
+Settings are validated per weapon before restoration. V1 and v2 links still load;
+v2 configurations inherit the level and handing from their parent weapon entry.
+
+## Version 2 (still supported)
+
+V2 links use `v: 2`. Shared stats, weapon identifiers, and weapon settings keep
+their v1 meanings. A weapon entry may additionally include this field:
+
+```json
+{
+  "configurations": [
+    { "id": "a", "stats": [18, 40, 10, 10, 10] },
+    { "id": "b", "stats": [23, 35, 10, 10, 10] }
+  ]
+}
+```
+
+Configuration IDs are distinct from weapon IDs and scoped to the parent weapon.
+Exactly one `a` and one `b` are required when configurations are present. Both use
+the parent weapon's affinity, upgrade and handing settings. All configuration
+input is validated; configurations for missing weapons are skipped with that
+weapon. Ordinary weapon entries need no configurations.
+
+## Version 1 (still supported)
 
 ```json
 {
@@ -32,8 +68,8 @@ base-name rename or affinity-ID change requires an explicit compatibility mappin
 to preserve old links; do not silently change this identifier scheme.
 
 `v` versions the serialization format independently of the game-data patch.
-Unsupported formats are rejected; future formats should retain an explicit v1
-decoder or migration. A patch mismatch warns that results use the currently shipped
+Unsupported formats are rejected. V1, v2, v3 and v4 are decoded; future formats should
+retain that compatibility. A patch mismatch warns that results use the currently shipped
 patch, rather than claiming to reproduce historical results. Unknown weapons are
 skipped with a warning. Ambiguous IDs, duplicate selections, invalid attributes,
 invalid upgrade levels, and malformed handing settings are rejected before state

@@ -11,6 +11,7 @@ A free, open-source attack rating calculator for Elden Ring. Pick any weapon, se
 
 ## Features
 
+- **Manual A/B stat comparison**: duplicate your attributes, redistribute points independently, and compare AR, damage types and individual buildups with independent upgrade levels and handing modes for the same weapon. Shows offensive attribute totals and requirement changes, without recommending a winner. Both configurations are shareable; see [`docs/stat-comparison.md`](docs/stat-comparison.md).
 - **Phone-friendly comparison workflow**: collapsible weapon browsing and filters, a jump to results, a compact sticky attribute bar, and larger touch controls. Shared comparisons open directly to their results on small screens.
 - **Shareable comparisons**: copy a versioned link containing your attributes, weapons, upgrade levels and handing modes, or bookmark it to restore the comparison. Weapon identifiers survive dataset reordering; see [`docs/share-links.md`](docs/share-links.md).
 - **Attack rating per damage type** (physical, magic, fire, lightning, holy), shown as base + scaling bonus, with a total that follows the game's rounding

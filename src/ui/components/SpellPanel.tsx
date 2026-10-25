@@ -30,8 +30,7 @@ export default function SpellPanel({ weapon, spell }: Props) {
     <section className="status-panel spell-panel">
       <h3>{title}</h3>
       <p className="spell-note">
-        Spell power as a percentage: 100% means no bonus, 126% means spells deal 26% more. Each
-        spell uses the value of its own element.
+        Spell-power scaling, not final spell damage. Each spell uses its own element's scaling.
       </p>
 
       <ul>

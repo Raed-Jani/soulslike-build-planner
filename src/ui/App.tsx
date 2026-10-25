@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ScalingTiers } from "../calculateAR";
-import type { Attributes } from "../attributes";
 import type { RegulationData } from "../regulationData";
 import { makeBuilder } from "../engine/buildWeapon";
-import { affinityKeyOf, type AffinityKey } from "./affinities";
+import { affinityInfo, affinityKeyOf, type AffinityKey } from "./affinities";
 import { loadRegulation } from "./loadRegulation";
-import { parseStat, type StatField, type StatText } from "./stats";
+import { type StatField, type StatText } from "./stats";
 import AffinityFilter from "./components/AffinityFilter";
 import LoadingError from "./components/LoadingError";
 import StatsForm from "./components/StatsForm";
@@ -16,6 +15,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { DATA_VERSION, decodeComparison, encodeComparison } from "./shareComparison";
 import ShareComparison from "./components/ShareComparison";
+import { createDistributionPair, distributionAttributes, normalizeStatText, updateComparisonBaselines, type DistributionPair } from "./statDistributions";
 
 const REPO = "https://github.com/Raed-Jani/soulslike-build-planner";
 
@@ -28,6 +28,7 @@ export default function App() {
   const [picked, setPicked] = useState<number[]>([]); // indexes into data.weapons
   const [levels, setLevels] = useState<Record<number, number>>({});
   const [twoHandings, setTwoHandings] = useState<Record<number, boolean>>({});
+  const [distributions, setDistributions] = useState<Record<number, DistributionPair>>({});
   const [types, setTypes] = useState<Set<number>>(new Set()); // empty = every type
   const [linkNotice, setLinkNotice] = useState("");
   const [browserOpen, setBrowserOpen] = useState(true);
@@ -36,14 +37,7 @@ export default function App() {
     str: "18", dex: "18", int: "10", fai: "10", arc: "10",
   });
 
-  const stats: Attributes = {
-    vig: 20, mnd: 10, end: 20,
-    str: parseStat(statText.str),
-    dex: parseStat(statText.dex),
-    int: parseStat(statText.int),
-    fai: parseStat(statText.fai),
-    arc: parseStat(statText.arc),
-  };
+  const stats = distributionAttributes(statText);
 
   useEffect(() => {
     setError(null);
@@ -54,6 +48,15 @@ export default function App() {
   }, [retryKey]);
 
   const build = useMemo(() => (data ? makeBuilder(data) : null), [data]);
+  const rawVariantsByName = useMemo(() => {
+    const groups = new Map<string, RegulationData["weapons"]>();
+    for (const raw of data?.weapons ?? []) {
+      const group = groups.get(raw.weaponName) ?? [];
+      group.push(raw);
+      groups.set(raw.weaponName, group);
+    }
+    return groups;
+  }, [data]);
 
   useEffect(() => {
     if (!data) return;
@@ -65,6 +68,7 @@ export default function App() {
         setPicked(restored.state.picked);
         setLevels(restored.state.levels);
         setTwoHandings(restored.state.twoHandings);
+        setDistributions(restored.state.distributions ?? {});
         setBrowserOpen(false);
         setLinkNotice(restored.warnings.join(" ") || "Shared comparison loaded.");
       } catch (error) {
@@ -113,12 +117,22 @@ const typeCounts = useMemo(() => {
       index,
       weapon: build(data.weapons[index]),
       affinity: affinityKeyOf(data.weapons[index].affinityId),
+      variants: (rawVariantsByName.get(data.weapons[index].weaponName) ?? []).map((raw) => ({
+        affinityId: raw.affinityId,
+        label: affinityInfo(affinityKeyOf(raw.affinityId))?.label ?? String(raw.affinityId),
+        weapon: build(raw),
+      })),
     }));
-  }, [data, build, picked]);
+  }, [data, build, picked, rawVariantsByName]);
 
   function togglePick(index: number) {
     if (picked.includes(index)) {
       setPicked(picked.filter((i) => i !== index));
+      setDistributions((current) => {
+        const next = { ...current };
+        delete next[index];
+        return next;
+      });
       return;
     }
     if (!data) return;
@@ -154,7 +168,9 @@ function toggleGroup(ids: number[]) {
 }
 
   function changeStat(stat: StatField, text: string) {
-    setStatText({ ...statText, [stat]: text });
+    if (statText[stat] === text) return;
+    setStatText((current) => ({ ...current, [stat]: text }));
+    setDistributions((current) => updateComparisonBaselines(current, stat, text));
   }
 
   if (error)
@@ -215,17 +231,20 @@ function toggleGroup(ids: number[]) {
 
         <section className="output" ref={outputRef} tabIndex={-1} aria-label="Weapon comparison">
           <StatsForm statText={statText} onChange={changeStat} />
+          {picked.some((index) => distributions[index]) && <p className="comparison-note">The attribute bar updates Configuration A in open comparisons. B stays independent; you can also edit either configuration below.</p>}
           <ShareComparison
             // Reset the generated link and clipboard message when the comparison
             // changes. Search/filter edits do not change the shared comparison.
-            key={JSON.stringify([statText, picked.map((index) => [index, levels[index] ?? 0, twoHandings[index] ?? false])])}
+            key={JSON.stringify([statText, picked.map((index) => [index, levels[index] ?? 0, twoHandings[index] ?? false, distributions[index]])])}
             createLink={() => {
             const url = new URL(window.location.href);
             // Share the same normalized attributes that the calculator currently uses.
-            const normalized = Object.fromEntries(
-              Object.entries(statText).map(([key, value]) => [key, String(parseStat(value))])
-            ) as StatText;
-            url.hash = encodeComparison({ statText: normalized, picked, levels, twoHandings }, data);
+            const normalized = normalizeStatText(statText);
+            const normalizedDistributions = Object.fromEntries(picked.filter((index) => distributions[index]).map((index) => [index, {
+              a: { ...distributions[index].a, statText: normalizeStatText(distributions[index].a.statText) },
+              b: { ...distributions[index].b, statText: normalizeStatText(distributions[index].b.statText) },
+            }]));
+            url.hash = encodeComparison({ statText: normalized, picked, levels, twoHandings, distributions: normalizedDistributions }, data);
             window.history.replaceState(null, "", url);
             return url.href;
           }} />
@@ -234,18 +253,27 @@ function toggleGroup(ids: number[]) {
             <p className="empty">Pick one or more weapons to see their attack rating.</p>
           ) : (
             <div className="cards">
-              {built.map(({ index, weapon, affinity }) => (
+              {built.map(({ index, weapon, affinity, variants }) => (
                 <WeaponCard
                   key={index}
                   weapon={weapon}
+                  variants={variants}
                   affinity={affinity}
-                  stats={stats}
+                  stats={distributions[index] ? distributionAttributes(distributions[index].a.statText) : stats}
+                  distributionPair={distributions[index]}
+                  onStartComparison={() => setDistributions((current) => ({ ...current, [index]: createDistributionPair(statText, levels[index] ?? 0, twoHandings[index] ?? false, data.weapons[index].affinityId) }))}
+                  onDistributionChange={(pair) => setDistributions((current) => ({ ...current, [index]: pair }))}
+                  onCloseComparison={() => setDistributions((current) => {
+                    const next = { ...current };
+                    delete next[index];
+                    return next;
+                  })}
                   tiers={data.scalingTiers as ScalingTiers}
                   level={levels[index] ?? 0}
                   onLevelChange={(level) => setLevels({ ...levels, [index]: level })}
                   twoHanding={twoHandings[index] ?? false}
                   onTwoHandingChange={(value) => setTwoHandings({ ...twoHandings, [index]: value })}
-                  onRemove={() => setPicked(picked.filter((i) => i !== index))}
+                  onRemove={() => togglePick(index)}
                 />
               ))}
             </div>

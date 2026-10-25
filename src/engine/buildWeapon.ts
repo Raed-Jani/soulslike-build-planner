@@ -124,6 +124,7 @@ export function makeBuilder(data: RegulationData) {
 
     return {
       name: w.name,
+      affinityId: w.affinityId,
       weaponName: w.weaponName,
       url: w.url,
       weaponType: w.weaponType,

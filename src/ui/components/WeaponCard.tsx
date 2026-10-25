@@ -6,7 +6,7 @@ import {
 } from "../../calculateAR";
 import type { Attributes } from "../../attributes";
 import type { Weapon } from "../../weapon";
-import { affinityInfo, type AffinityKey } from "../affinities";
+import { affinityInfo, affinityKeyOf, type AffinityKey } from "../affinities";
 import { Icon } from "../icons";
 import { weaponWikiUrl } from "../weaponWiki";
 import AttackPanel from "./AttackPanel";
@@ -14,9 +14,12 @@ import RequirementsPanel from "./RequirementsPanel";
 import ScalingPanel from "./ScalingPanel";
 import StatusPanel from "./StatusPanel";
 import SpellPanel from "./SpellPanel";
+import DistributionComparison from "./DistributionComparison";
+import type { DistributionPair, WeaponVariant } from "../statDistributions";
 
 interface Props {
   weapon: Weapon;
+  variants: WeaponVariant[];
   stats: Attributes;
   tiers: ScalingTiers;
   level: number;
@@ -25,19 +28,26 @@ interface Props {
   twoHanding: boolean;
   onTwoHandingChange: (value: boolean) => void;
   onRemove: () => void;
+  distributionPair?: DistributionPair;
+  onStartComparison: () => void;
+  onDistributionChange: (pair: DistributionPair) => void;
+  onCloseComparison: () => void;
 }
 
 export default function WeaponCard({
-  weapon, stats, tiers, level, affinity, onLevelChange, twoHanding, onTwoHandingChange, onRemove,
+  weapon: originalWeapon, variants, stats, tiers, level, affinity, onLevelChange, twoHanding, onTwoHandingChange, onRemove,
+  distributionPair, onStartComparison, onDistributionChange, onCloseComparison,
 }: Props) {
+  const weapon = distributionPair ? variants.find((variant) => variant.affinityId === (distributionPair.a.affinityId ?? originalWeapon.affinityId))?.weapon ?? originalWeapon : originalWeapon;
   const maxLevel = weapon.attack.length - 1;
-  const safeLevel = Math.min(level, maxLevel);
+  const safeLevel = Math.min(distributionPair?.a.level ?? level, maxLevel);
+  const activeTwoHanding = distributionPair?.a.twoHanding ?? twoHanding;
   const alwaysTwoHanded =
     weapon.weaponType !== undefined && ALWAYS_TWO_HANDED.includes(weapon.weaponType);
 
-  const detail = calculateARDetail(weapon, stats, safeLevel, twoHanding);
-  const effective = adjustForTwoHanding(weapon, stats, twoHanding);
-  const info = affinityInfo(affinity);
+  const detail = calculateARDetail(weapon, stats, safeLevel, activeTwoHanding);
+  const effective = adjustForTwoHanding(weapon, stats, activeTwoHanding);
+  const info = affinityInfo(distributionPair && weapon.affinityId !== undefined ? affinityKeyOf(weapon.affinityId) : affinity);
   const wikiUrl = weaponWikiUrl(weapon);
 
   return (
@@ -71,7 +81,7 @@ export default function WeaponCard({
             ×
           </button>
         </div>
-        <label>
+        {!distributionPair && <><label>
           Level{" "}
           <select value={safeLevel} onChange={(e) => onLevelChange(Number(e.target.value))}>
             {Array.from({ length: maxLevel + 1 }, (_, i) => (
@@ -89,14 +99,22 @@ export default function WeaponCard({
           Two-handing
           {alwaysTwoHanded && " (always)"}
           {weapon.paired && " (no bonus for paired weapons)"}
-        </label>
+        </label></>}
       </header>
+
+      {distributionPair && <p className="distribution-main-label">Configuration A · independent attributes</p>}
 
       <AttackPanel damage={detail.damage} />
       <ScalingPanel weapon={weapon} level={safeLevel} tiers={tiers} />
       <RequirementsPanel weapon={weapon} effective={effective} unmet={detail.unmet} />
       <StatusPanel status={detail.status} />
       <SpellPanel weapon={weapon} spell={detail.spell} />
+      {distributionPair ? (
+        <DistributionComparison weapon={originalWeapon} variants={variants} tiers={tiers}
+          pair={distributionPair} onChange={onDistributionChange} onClose={onCloseComparison} />
+      ) : (
+        <div className="distribution-start"><button type="button" onClick={onStartComparison}>Compare another stat distribution</button></div>
+      )}
     </article>
   );
 }

@@ -13,6 +13,7 @@ export type AttackElementCorrect = Partial<
 >;
 export interface Weapon {
     name: string;
+    affinityId?: number;
     /** Base name without affinity, used for external weapon information. */
     weaponName?: string;
     url?: string | null;

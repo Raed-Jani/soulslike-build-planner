@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import type { RegulationData } from "../regulationData";
 import { calculateARDetail } from "../calculateAR";
 import { makeBuilder } from "../engine/buildWeapon";
+import { createDistributionPair, updateConfigurationSettings, updateDistribution } from "./statDistributions";
 import {
   DATA_VERSION, MAX_SHARE_WEAPONS, decodeComparison, encodeComparison,
   stableWeaponId, type ComparisonState,
@@ -38,6 +39,76 @@ function payload(overrides: Record<string, unknown> = {}) {
 }
 
 describe("versioned comparison links", () => {
+  it("preserves distinct affinities across dataset reordering in v4", () => {
+    const standard = indexOf("Uchigatana");
+    const pair = updateConfigurationSettings(createDistributionPair(state.statText, 25, false, 0), "b", { affinityId: 9 });
+    const expanded = { ...state, picked: [standard], distributions: { [standard]: pair } };
+    const reordered = { ...data, weapons: [...data.weapons].reverse() };
+    const restored = decodeComparison(encodeComparison(expanded, data), reordered)!.state;
+    expect(restored.distributions![restored.picked[0]]).toEqual(pair);
+  });
+
+  it("rejects affinities unavailable for the selected base weapon", () => {
+    const pair = updateConfigurationSettings(createDistributionPair(state.statText, 10, false, -1), "b", { affinityId: 1 });
+    expect(() => encodeComparison({ ...state, distributions: { [moonveil]: pair } }, data)).toThrow("invalid");
+    expect(() => decodeComparison(payload({ v: 4, weapons: [{ id: stableWeaponId(data.weapons[moonveil]), level: 10, twoHanding: false,
+      configurations: [{ id: "a", stats: [18,24,40,10,60], level: 10, twoHanding: false, affinityId: -1 }, { id: "b", stats: [18,24,40,10,60], level: 10, twoHanding: false, affinityId: 1 }],
+    }] }), data)).toThrow("invalid");
+  });
+  it("preserves independent levels and handing in v3", () => {
+    const pair = updateConfigurationSettings(createDistributionPair(state.statText, 10, false), "b", { level: 5, twoHanding: true });
+    const expanded = { ...state, distributions: { [moonveil]: pair } };
+    expect(decodeComparison(encodeComparison(expanded, data), data)!.state).toEqual(expanded);
+  });
+
+  it("migrates v2 configurations using their parent weapon settings", () => {
+    const hash = payload({ v: 2, weapons: [{ id: stableWeaponId(data.weapons[moonveil]), level: 5, twoHanding: true,
+      configurations: [{ id: "a", stats: [18,24,40,10,60] }, { id: "b", stats: [22,24,40,10,60] }],
+    }] });
+    const pair = decodeComparison(hash, data)!.state.distributions![moonveil];
+    expect(pair.a).toMatchObject({ level: 5, twoHanding: true });
+    expect(pair.b).toMatchObject({ level: 5, twoHanding: true });
+  });
+
+  it.each([-1, 0.5, 11, 26])("rejects invalid somber B level %s", (level) => {
+    const pair = updateConfigurationSettings(createDistributionPair(state.statText, 10), "b", { level });
+    expect(() => encodeComparison({ ...state, distributions: { [moonveil]: pair } }, data)).toThrow("invalid");
+    expect(() => decodeComparison(payload({ v: 3, weapons: [{ id: stableWeaponId(data.weapons[moonveil]), level: 10, twoHanding: false,
+      configurations: [{ id: "a", stats: [18,24,40,10,60], level: 10, twoHanding: false }, { id: "b", stats: [18,24,40,10,60], level, twoHanding: true }],
+    }] }), data)).toThrow("invalid");
+  });
+  it("continues to load the existing v1 format", () => {
+    expect(decodeComparison(payload(), data)).toEqual({ state, warnings: [] });
+  });
+
+  it("round-trips independent A/B configurations in v2", () => {
+    const pair = updateDistribution(createDistributionPair(state.statText), "b", "dex", "34");
+    const expanded = { ...state, distributions: { [moonveil]: pair } };
+    const hash = encodeComparison(expanded, data);
+    expect(JSON.parse(decodeURIComponent(hash.slice(7))).v).toBe(4);
+    expect(decodeComparison(hash, data)!.state).toEqual(expanded);
+  });
+
+  it("restores A/B configurations against stable weapon IDs after reordering", () => {
+    const pair = updateDistribution(createDistributionPair(state.statText), "b", "str", "30");
+    const reordered = { ...data, weapons: [...data.weapons].reverse() };
+    const restored = decodeComparison(encodeComparison({ ...state, distributions: { [moonveil]: pair } }, data), reordered)!.state;
+    expect(restored.distributions![restored.picked[0]]).toEqual(pair);
+    expect(reordered.weapons[restored.picked[0]].name).toBe("Moonveil");
+  });
+
+  it.each([
+    [],
+    [{ id: "a", stats: [18, 24, 40, 10, 60] }],
+    [{ id: "a", stats: [18, 24, 40, 10, 60] }, { id: "a", stats: [18, 24, 40, 10, 60] }],
+    [{ id: "a", stats: [18, 24, 40, 10, 60] }, { id: "b", stats: [100, 24, 40, 10, 60] }],
+    [{ id: "a", stats: [18, 24, 40, 10, 60] }, { id: "c", stats: [18, 24, 40, 10, 60] }],
+  ])("rejects invalid v2 configurations %j", (...configurations) => {
+    expect(() => decodeComparison(payload({ v: 2, weapons: [
+      { id: stableWeaponId(data.weapons[moonveil]), level: 10, twoHanding: false, configurations },
+    ] }), data)).toThrow("invalid");
+  });
+
   it("has unique stable IDs for every weapon/affinity record", () => {
     const ids = data.weapons.map(stableWeaponId);
     expect(new Set(ids).size).toBe(data.weapons.length);
@@ -87,7 +158,7 @@ describe("versioned comparison links", () => {
   });
 
   it("rejects unsupported versions without guessing their schema", () => {
-    expect(() => decodeComparison(payload({ v: 2 }), data)).toThrow("unsupported format version");
+    expect(() => decodeComparison(payload({ v: 5 }), data)).toThrow("unsupported format version");
   });
 
   it.each([
