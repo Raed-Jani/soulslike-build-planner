@@ -44,9 +44,23 @@ A curve turns an attribute value into a number between about 0 and 1 (the share 
 
 Between two consecutive entries, with $v_0, g_0, p$ taken from the first entry and $v_1, g_1$ from the second:
 
-$$t = \operatorname{clamp}\left(\frac{v - v_0}{v_1 - v_0},\, 0,\, 1\right)$$
+$$
+t = \min\left(1,\, \max\left(0,\, \frac{v - v_0}{v_1 - v_0}\right)\right)
+$$
 
-$$t' = \begin{cases} t^{\,p} & p > 0 \\ 1 - (1 - t)^{-p} & p < 0 \\ t & p = 0 \end{cases} \qquad\qquad g(v) = g_0 + (g_1 - g_0)\, t'$$
+This clamps the interpolation fraction to the range 0–1.
+
+$$
+t' = \begin{cases}
+t^{\,p} & p > 0 \\
+1 - (1 - t)^{-p} & p < 0 \\
+t & p = 0
+\end{cases}
+$$
+
+$$
+g(v) = g_0 + (g_1 - g_0)\, t'
+$$
 
 The shape parameter $p$ (`adjPt`) is the one of the entry where the stage starts. This is a port of `evaluateCalcCorrectGraph` from the reference calculator (MIT license, see the README).
 
