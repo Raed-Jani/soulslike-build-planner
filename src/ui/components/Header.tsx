@@ -16,7 +16,7 @@ export default function Header({ repo, dataVersion }: Props) {
             Patch {dataVersion}
           </span>
         </div>
-        <p className="subtitle">Compare weapons and explore different configurations.</p>
+        <p className="subtitle">Compare weapons with shared attributes, or compare two configurations of the same weapon.</p>
         <p className="scope-note">
           Does not include enemy defense, buffs, weapon-skill effects, armor or talismans.
         </p>
